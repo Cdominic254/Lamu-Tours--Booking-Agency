@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking - Lamu Tours & Booking Agency</title>
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        h1 {
+            margin: 0;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: slideInLeft 0.8s ease;
+            font-size: 3.5em;
+        }
+        nav {
+            background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+            padding: 0.8rem;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        nav a:hover {
+            background-color: #ff9a56;
+            color: #1e3c72;
+            transform: translateY(-2px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            animation: fadeInUp 0.8s ease;
+        }
+        h2 {
+            color: #1e3c72;
+            border-bottom: 3px solid #ff9a56;
+            padding-bottom: 0.5rem;
+            font-size: 2em;
+            animation: slideInLeft 0.6s ease;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            animation: fadeInUp 1s ease;
+        }
+        label {
+            margin-top: 1rem;
+            color: #1e3c72;
+            font-weight: 600;
+        }
+        input, select, textarea {
+            padding: 0.8rem;
+            margin-top: 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #ff9a56;
+            box-shadow: 0 0 8px rgba(255, 154, 86, 0.3);
+            background: #fafafa;
+        }
+        button {
+            margin-top: 1.5rem;
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(135deg, #ff9a56 0%, #ff7e3f 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 154, 86, 0.3);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 154, 86, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        #total-price {
+            margin-top: 1.5rem;
+            font-weight: bold;
+            color: #1e3c72;
+            background: #f0f8ff;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #ff9a56;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lamu Tours & Booking Agency</h1>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="tours.html">Tours</a>
+        <a href="booking.html">Booking</a>
+        <a href="dashboard">Dashboard</a>
+        <a href="about-lamu.html">About Lamu</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <div class="container">
+        <h2>Book Your Tour</h2>
+        <form action="/booking-confirmation" method="post">
+            <label for="name">Full Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" required>
+
+            <label for="tour">Select Tour:</label>
+            <select id="tour" name="tour" required>
+                <option value="">Choose a tour</option>
+                <option value="dhow">Dhow Trips</option>
+                <option value="old-town">Old Town Walks</option>
+                <option value="sandbank">Sandbank Picnics</option>
+                <option value="fishing">Fishing Trips</option>
+                <option value="water-sports">Water Sports</option>
+                <option value="day-trips">Day Trips</option>
+                <option value="cultural">Cultural Tours</option>
+            </select>
+
+            <label for="date">Preferred Date:</label>
+            <input type="date" id="date" name="date" required>
+
+            <label for="time">Preferred Time:</label>
+            <input type="time" id="time" name="time" required>
+
+            <label for="guests">Number of Guests:</label>
+            <input type="number" id="guests" name="guests" min="1" required>
+
+            <div id="total-price">Total Price: $0</div>
+
+            <label for="message">Special Requests:</label>
+            <textarea id="message" name="message" rows="4"></textarea>
+
+            <h3>Payment Details</h3>
+            <label for="card-number">Card Number:</label>
+            <input type="text" id="card-number" name="card-number" placeholder="1234 5678 9012 3456" required>
+
+            <label for="expiry">Expiry Date:</label>
+            <input type="text" id="expiry" name="expiry" placeholder="MM/YY" required>
+
+            <label for="cvv">CVV:</label>
+            <input type="text" id="cvv" name="cvv" placeholder="123" required>
+
+            <label for="card-name">Name on Card:</label>
+            <input type="text" id="card-name" name="card-name" required>
+
+            <p style="font-size: 0.9em; color: #666;">Your payment information is secure and encrypted.</p>
+
+            <button type="submit">Submit Booking & Pay</button>
+        </form>
+    </div>
+    <script>
+        const tourPrices = {
+            dhow: 80,
+            'old-town': 50,
+            sandbank: 70,
+            fishing: 90,
+            'water-sports': 85,
+            'day-trips': 75,
+            cultural: 60
+        };
+
+        function calculateTotal() {
+            const tourSelect = document.getElementById('tour');
+            const guestsInput = document.getElementById('guests');
+            const totalDiv = document.getElementById('total-price');
+
+            const selectedTour = tourSelect.value;
+            const guests = parseInt(guestsInput.value) || 0;
+
+            if (selectedTour && guests > 0) {
+                const price = tourPrices[selectedTour];
+                const total = price * guests;
+                totalDiv.textContent = `Total Price: $${total}`;
+            } else {
+                totalDiv.textContent = 'Total Price: $0';
+            }
+        }
+
+        document.getElementById('tour').addEventListener('change', calculateTotal);
+        document.getElementById('guests').addEventListener('input', calculateTotal);
+    </script>
+</body>
+</html>

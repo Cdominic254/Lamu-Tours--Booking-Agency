@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Lamu - Lamu Tours & Booking Agency</title>
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes zoom {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin: 0;
+            font-size: 3.5em;
+        }
+        nav {
+            background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+            padding: 0.8rem;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        nav a:hover {
+            background-color: #ff9a56;
+            color: #1e3c72;
+            transform: translateY(-2px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            animation: fadeInUp 0.8s ease;
+        }
+        h2 {
+            color: #1e3c72;
+            border-bottom: 3px solid #ff9a56;
+            padding-bottom: 0.5rem;
+            font-size: 2em;
+        }
+        h3 {
+            color: #2a5298;
+        }
+        h4 {
+            color: #1e3c72;
+            margin: 0 0 0.5rem 0;
+        }
+        p {
+            color: #555;
+            line-height: 1.8;
+        }
+        .about-image {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border-radius: 12px;
+            margin: 1rem 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            animation: zoom 0.8s ease;
+        }
+        .attraction {
+            display: flex;
+            gap: 1.5rem;
+            margin: 2rem 0;
+            align-items: flex-start;
+            padding: 1.5rem;
+            background: #f9f9f9;
+            border-radius: 10px;
+            border-left: 4px solid #2a5298;
+            transition: all 0.4s ease;
+            animation: fadeInUp 0.8s ease;
+        }
+        .attraction:hover {
+            background: #f0f8ff;
+            box-shadow: 0 8px 20px rgba(42, 82, 152, 0.15);
+            transform: translateX(8px);
+        }
+        .attraction-image {
+            width: 250px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.5s ease;
+        }
+        .attraction:hover .attraction-image {
+            transform: scale(1.06) rotate(3deg);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+        .attraction-content {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lamu Tours & Booking Agency</h1>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="tours.html">Tours</a>
+        <a href="booking.html">Booking</a>
+        <a href="dashboard">Dashboard</a>
+        <a href="about-lamu.html">About Lamu</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <div class="container">
+        <h2>About Lamu</h2>
+        <img src="images/Lamu,_Kenya_(45275410485).jpeg" alt="Lamu Panorama" class="about-image">
+        <p>Lamu is a small island located off the coast of Kenya, known for its rich history, stunning architecture, and vibrant culture. It is the oldest and best-preserved Swahili settlement in East Africa and was declared a UNESCO World Heritage Site in 2001.</p>
+        <p>Lamu life is relaxed and slow-paced, with locals and visitors moving on foot, donkeys, and boats instead of cars. This slow rhythm is part of the island’s charm and invites guests to savor every moment.</p>
+        <h3>History</h3>
+        <p>Lamu has been inhabited since the 14th century and served as an important trading center for spices, ivory, and slaves. Its strategic location made it a hub for Arab, Persian, Indian, and African traders.</p>
+        <h3>Culture</h3>
+        <p>The island is home to a unique blend of cultures, with influences from Arab, African, and Indian traditions. The local Swahili language and Islamic architecture are prominent features, and the experience here is a woven tapestry of Swahili culture, where community life, traditional crafts, and cuisine come together.</p>
+        <h3>Attractions</h3>
+        <div class="attraction">
+            <img src="images/Lamu_Fort_Museum's.jpg" alt="Lamu Old Town" class="attraction-image">
+            <div class="attraction-content">
+                <h4>Lamu Old Town</h4>
+                <p>Narrow streets, coral stone buildings, and historic mosques create an atmospheric walk through centuries of Swahili heritage. The architecture is a living museum of East African history.</p>
+            </div>
+        </div>
+        <div class="attraction">
+            <img src="images/shela-lamu-kenya-01.jpg" alt="Beaches" class="attraction-image">
+            <div class="attraction-content">
+                <h4>Beaches</h4>
+                <p>Pristine white sand beaches perfect for relaxation, swimming, and water sports. The clear turquoise waters of the Indian Ocean offer a tropical paradise experience.</p>
+            </div>
+        </div>
+        <div class="attraction">
+            <img src="images/Riadha_Mosque_in_Lamu.jpg" alt="Cultural Sites" class="attraction-image">
+            <div class="attraction-content">
+                <h4>Museums & Cultural Sites</h4>
+                <p>Learn about the island's rich history and culture through museums and traditional sites. Discover the stories of Swahili traders and the Islamic heritage of the island.</p>
+            </div>
+        </div>
+        <div class="attraction">
+            <img src="images/Lamu_Donkey_Sanctuary.jpg" alt="Donkey Sanctuary" class="attraction-image">
+            <div class="attraction-content">
+                <h4>Donkey Sanctuary</h4>
+                <p>Meet and interact with the famous Lamu donkeys that are central to island life. The sanctuary cares for these beloved animals that have served the community for generations.</p>
+            </div>
+        </div>
+        <div class="attraction">
+            <img src="images/shela-village.webp" alt="Traditional Living" class="attraction-image">
+            <div class="attraction-content">
+                <h4>Local Transport & Living</h4>
+                <p>Experience life by walking, riding donkeys, and traveling by boat. This unique way of life has remained virtually unchanged for centuries, offering an authentic glimpse into Swahili culture.</p>
+            </div>
+        </div>
+        <p>Visit Lamu to experience a piece of living history and immerse yourself in its timeless charm.</p>
+    </div>
+</body>
+</html>

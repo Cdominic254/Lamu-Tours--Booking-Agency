@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tour Details - Lamu Tours & Booking Agency</title>
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        h1 {
+            margin: 0;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: slideInLeft 0.8s ease;
+            font-size: 3.5em;
+        }
+        nav {
+            background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+            padding: 0.8rem;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        nav a:hover {
+            background-color: #ff9a56;
+            color: #1e3c72;
+            transform: translateY(-2px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            animation: fadeInUp 0.8s ease;
+        }
+        h2 {
+            color: #1e3c72;
+            border-bottom: 3px solid #ff9a56;
+            padding-bottom: 0.5rem;
+            font-size: 2em;
+            animation: slideInLeft 0.6s ease;
+        }
+        p {
+            color: #555;
+            line-height: 1.8;
+            font-size: 1.05em;
+        }
+        strong {
+            color: #1e3c72;
+        }
+        ul {
+            color: #555;
+            line-height: 1.8;
+        }
+        ul li {
+            color: #555;
+            margin: 0.5rem 0;
+        }
+        .book-btn {
+            background: linear-gradient(135deg, #ff9a56 0%, #ff7e3f 100%);
+            color: white;
+            padding: 0.9rem 1.8rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            font-size: 1.05em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 154, 86, 0.3);
+            margin-top: 1rem;
+        }
+        .book-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 154, 86, 0.4);
+        }
+        .book-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lamu Tours & Booking Agency</h1>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="tours.html">Tours</a>
+        <a href="booking.html">Booking</a>
+        <a href="dashboard">Dashboard</a>
+        <a href="about-lamu.html">About Lamu</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <div class="container" id="tour-details">
+        <h2 id="tour-title">Tour Details</h2>
+        <p id="tour-desc"><strong>Description:</strong> Loading tour details...</p>
+        <p id="tour-duration"><strong>Duration:</strong> </p>
+        <p id="tour-price"><strong>Price:</strong> </p>
+        <p id="tour-includes"><strong>Includes:</strong> </p>
+        <p><strong>Itinerary:</strong></p>
+        <ul id="tour-itinerary"></ul>
+        <a href="booking.html" class="book-btn" id="book-btn">Book This Tour</a>
+    </div>
+    <script>
+        const tourData = {
+            1: {
+                title: 'Dhow Trips',
+                description: 'Enjoy traditional dhow sailing around Lamu’s coastline with snorkeling and island stops.',
+                duration: 'Half day',
+                price: '$80 per person',
+                includes: 'Dhow ride, snorkeling gear, light refreshments',
+                itinerary: ['Meet at the jetty', 'Sail to nearby islands', 'Snorkeling stops', 'Beach relaxation', 'Return at sunset']
+            },
+            2: {
+                title: 'Old Town Walks',
+                description: 'Explore the historic streets, architecture, and marketplaces of Lamu Old Town.',
+                duration: '3 hours',
+                price: '$50 per person',
+                includes: 'Guided walk, cultural insights, local stories',
+                itinerary: ['Meet at agency office', 'Walk through narrow lanes', 'Visit mosques and museums', 'Local art and crafts market', 'Return']
+            },
+            3: {
+                title: 'Sandbank Picnics',
+                description: 'Relax on a private sandbank with picnic lunch, swimming, and beach activities.',
+                duration: 'Half day',
+                price: '$70 per person',
+                includes: 'Boat transfer, picnic lunch, water activities',
+                itinerary: ['Depart by boat', 'Arrive at sandbank', 'Picnic lunch', 'Swimming and sunbathing', 'Return to Lamu']
+            },
+            4: {
+                title: 'Fishing Trips',
+                description: 'Go deep-sea fishing with local crew and enjoy fresh catch barbecue.',
+                duration: 'Full day',
+                price: '$90 per person',
+                includes: 'Fishing equipment, crew, catch cooking',
+                itinerary: ['Meet at pier', 'Head to deep-sea fishing spot', 'Fishing session', 'Cook fresh catch on board', 'Return']
+            },
+            5: {
+                title: 'Cultural Tours',
+                description: 'Visit museums, traditional workshops, and attend local cultural performances.',
+                duration: '4 hours',
+                price: '$60 per person',
+                includes: 'Guided cultural tour, entrance to local sites',
+                itinerary: ['Visit Lamu Museum', 'Traditional Swahili home visit', 'Cultural performance', 'Local crafts demonstration', 'Wrap-up']
+            },
+            6: {
+                title: 'Water Sports',
+                description: 'Experience adrenaline with jet skiing, windsurfing, and paddleboarding in clear waters.',
+                duration: 'Half day',
+                price: '$85 per person',
+                includes: 'Equipment rental, instructor, safety brief',
+                itinerary: ['Meet at beach jetty', 'Safety briefing', 'Jet ski session', 'Windsurfing/paddleboarding', 'Relax on beach']
+            },
+            7: {
+                title: 'Day Trips',
+                description: 'Explore nearby islands and coastal attractions on a full-day guided excursion.',
+                duration: 'Full day',
+                price: '$75 per person',
+                includes: 'Boat transport, lunch, guide',
+                itinerary: ['Depart from jetty', 'Visit nearby island', 'Lunch and beach time', 'Coastal sightseeing', 'Return to Lamu']
+            }
+        };
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function renderTourDetails() {
+            const id = getQueryParam('id');
+            const tour = tourData[id];
+
+            if (!tour) {
+                document.getElementById('tour-title').textContent = 'Tour Not Found';
+                document.getElementById('tour-desc').textContent = 'No tour matches the selected id. Please return to the tours list.';
+                document.getElementById('tour-price').textContent = '';
+                document.getElementById('tour-duration').textContent = '';
+                document.getElementById('tour-includes').textContent = '';
+                document.getElementById('tour-itinerary').innerHTML = '';
+                document.getElementById('book-btn').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('tour-title').textContent = tour.title;
+            document.getElementById('tour-desc').innerHTML = `<strong>Description:</strong> ${tour.description}`;
+            document.getElementById('tour-duration').innerHTML = `<strong>Duration:</strong> ${tour.duration}`;
+            document.getElementById('tour-price').innerHTML = `<strong>Price:</strong> ${tour.price}`;
+            document.getElementById('tour-includes').innerHTML = `<strong>Includes:</strong> ${tour.includes}`;
+
+            const itineraryElem = document.getElementById('tour-itinerary');
+            itineraryElem.innerHTML = '';
+            tour.itinerary.forEach(step => {
+                const li = document.createElement('li');
+                li.textContent = step;
+                itineraryElem.appendChild(li);
+            });
+
+            document.getElementById('book-btn').href = `booking.html?tour=${encodeURIComponent(id)}`;
+        }
+
+        renderTourDetails();
+    </script>
+</body>
+</html>

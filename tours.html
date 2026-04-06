@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tours - Lamu Tours & Booking Agency</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        nav {
+            background-color: #444;
+            padding: 0.5rem;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        nav a:hover {
+            background-color: #555;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 3.5em;
+        }
+        nav a:hover {
+            background-color: #ff9a56;
+            color: #1e3c72;
+        }
+        .container {
+            animation: fadeInUp 0.8s ease;
+        }
+        h2 {
+            color: #1e3c72;
+            border-bottom: 3px solid #ff9a56;
+            font-size: 2em;
+        }
+        .tour {
+            border-left: 4px solid #ff9a56;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            transition: all 0.4s ease;
+            animation: fadeInUp 0.8s ease;
+        }
+        .tour:hover {
+            background: #f0f8ff;
+            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.15);
+            transform: translateX(5px);
+        }
+        .tour-image {
+            width: 200px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.5s ease;
+        }
+        .tour:hover .tour-image {
+            transform: scale(1.08) rotate(-2deg);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+        .tour-content {
+            flex: 1;
+        }
+        .tour h3 {
+            margin: 0;
+            color: #1e3c72;
+            font-size: 1.5em;
+        }
+        .tour p {
+            margin: 0.5rem 0;
+            color: #555;
+        }
+        .tour a {
+            color: #ff9a56;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .tour a:hover {
+            color: #1e3c72;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lamu Tours & Booking Agency</h1>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="tours.html">Tours</a>
+        <a href="booking.html">Booking</a>
+        <a href="dashboard">Dashboard</a>
+        <a href="about-lamu.html">About Lamu</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <div class="container">
+        <h2>Available Tours</h2>
+        <div class="tour">
+            <img src="images/shela-lamu-kenya-09.jpg" alt="Dhow Trips" class="tour-image">
+            <div class="tour-content">
+                <h3>Dhow Trips</h3>
+                <p>Enjoy traditional dhow sailing around Lamu's coastline with snorkeling and island stops.</p>
+                <p>Duration: Half day | Price: $80 per person</p>
+                <a href="tour-details.html?id=1">View Details</a>
+            </div>
+        </div>
+        <div class="tour">
+            <img src="images/Lamu_Fort_Museum's.jpg" alt="Old Town Walks" class="tour-image">
+            <div class="tour-content">
+                <h3>Old Town Walks</h3>
+                <p>Explore the historic streets, architecture, and marketplaces of Lamu Old Town.</p>
+                <p>Duration: 3 hours | Price: $50 per person</p>
+                <a href="tour-details.html?id=2">View Details</a>
+            </div>
+        </div>
+        <div class="tour">
+            <img src="images/shela-village.webp" alt="Sandbank Picnics" class="tour-image">
+            <div class="tour-content">
+                <h3>Sandbank Picnics</h3>
+                <p>Relax on a private sandbank with picnic lunch, swimming, and beach activities.</p>
+                <p>Duration: Half day | Price: $70 per person</p>
+                <a href="tour-details.html?id=3">View Details</a>
+            </div>
+        </div>
+        <div class="tour">
+            <img src="images/Lamu_coast.jpg" alt="Fishing Trips" class="tour-image">
+            <div class="tour-content">
+                <h3>Fishing Trips</h3>
+                <p>Go deep-sea fishing with local crew and enjoy fresh catch barbecue.</p>
+                <p>Duration: Full day | Price: $90 per person</p>
+                <a href="tour-details.html?id=4">View Details</a>
+            </div>
+        </div>
+        <div class="tour">
+            <img src="images/Spiritedpursuit_leelitumbe-106_lamu_kenya.webp" alt="Water Sports" class="tour-image">
+            <div class="tour-content">
+                <h3>Water Sports</h3>
+                <p>Experience adrenaline with jet skiing, windsurfing, and paddleboarding in clear waters.</p>
+                <p>Duration: Half day | Price: $85 per person</p>
+                <a href="tour-details.html?id=6">View Details</a>
+            </div>
+        </div>
+        <div class="tour">
+            <img src="images/Spiritedpursuit_leelitumbe-49_lamu_kenya.webp" alt="Day Trips" class="tour-image">
+            <div class="tour-content">
+                <h3>Day Trips</h3>
+                <p>Explore nearby islands and coastal attractions on a full-day guided excursion.</p>
+                <p>Duration: Full day | Price: $75 per person</p>
+                <a href="tour-details.html?id=7">View Details</a>
+            </div>
+        </div>
+        <div class="tour">
+            <img src="images/Riadha_Mosque_in_Lamu.jpg" alt="Cultural Tours" class="tour-image">
+            <div class="tour-content">
+                <h3>Cultural Tours</h3>
+                <p>Visit museums, traditional workshops, and attend local cultural performances.</p>
+                <p>Duration: 4 hours | Price: $60 per person</p>
+                <a href="tour-details.html?id=5">View Details</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

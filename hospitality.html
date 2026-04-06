@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospitality Listings - Lamu Tours & Booking Agency</title>
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        h1 {
+            margin: 0;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: slideInLeft 0.8s ease;
+            font-size: 3.5em;
+        }
+        header p {
+            color: #ff9a56;
+            margin: 0.5rem 0 0 0;
+            font-style: italic;
+        }
+        nav {
+            background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%);
+            padding: 0.8rem;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        nav a:hover {
+            background-color: #ff9a56;
+            color: #1e3c72;
+            transform: translateY(-2px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            animation: fadeInUp 0.8s ease;
+        }
+        h2 {
+            color: #1e3c72;
+            border-bottom: 3px solid #ff9a56;
+            padding-bottom: 0.5rem;
+            font-size: 2em;
+            animation: slideInLeft 0.6s ease;
+        }
+        .listing {
+            border-left: 4px solid #ff9a56;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            background: #f9f9f9;
+            border-radius: 8px;
+            transition: all 0.4s ease;
+            animation: fadeInUp 0.8s ease;
+        }
+        .listing:hover {
+            background: #f0f8ff;
+            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.15);
+            transform: translateX(8px);
+        }
+        .listing h3 {
+            margin: 0;
+            color: #1e3c72;
+            font-size: 1.3em;
+        }
+        .listing p {
+            margin: 0.5rem 0;
+            color: #555;
+            line-height: 1.6;
+        }
+        .commission {
+            color: #ff9a56;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Hospitality Listings</h1>
+        <p>List with us at a commission rate and get extra visibility.</p>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="tours.html">Tours</a>
+        <a href="booking.html">Booking</a>
+        <a href="dashboard">Dashboard</a>
+        <a href="about-lamu.html">About Lamu</a>
+        <a href="contact.html">Contact</a>
+        <a href="hospitality.html">Hospitality</a>
+    </nav>
+    <div class="container">
+        <h2>Available Hospitality Partners</h2>
+        <div class="listing">
+            <h3>Guest Houses</h3>
+            <p>Comfortable, locally-owned guest houses with authentic Swahili hospitality.</p>
+            <p class="commission">Commission: 10%</p>
+        </div>
+        <div class="listing">
+            <h3>Boutique Hotels</h3>
+            <p>Stylish boutique hotels offering high-end comfort and personalized service.</p>
+            <p class="commission">Commission: 12%</p>
+        </div>
+        <div class="listing">
+            <h3>Beach Villas</h3>
+            <p>Private beach villas with ocean views, ideal for groups and luxury stays.</p>
+            <p class="commission">Commission: 15%</p>
+        </div>
+        <div class="listing">
+            <h3>Restaurants</h3>
+            <p>Local and international dining options with fresh seafood and Swahili dishes.</p>
+            <p class="commission">Commission: 8%</p>
+        </div>
+        <div class="listing">
+            <h3>Cafes</h3>
+            <p>Cafes offering light meals, coffee, and snacks for travelers and locals.</p>
+            <p class="commission">Commission: 8%</p>
+        </div>
+        <div class="listing">
+            <h3>Bars</h3>
+            <p>Beach bars and lounge pubs with drinks, music, and relaxed atmosphere.</p>
+            <p class="commission">Commission: 10%</p>
+        </div>
+    </div>
+</body>
+</html>
