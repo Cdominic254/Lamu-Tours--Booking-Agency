@@ -1,2 +1,181 @@
 Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
+# Lamu Tourism App – Requirements
+
+## 1. Project Overview
+
+### 1.1 Problem Statement
+
+<!-- Problems in Lamu tourism: fragmented booking, lack of visibility for operators, poor tourist experience, etc. -->
+
+### 1.2 Objectives
+
+<!-- Main goals of the system. Example:
+- Help tourists discover and book local experiences in Lamu.
+- Help operators manage availability, pricing, and bookings.
+- Provide a simple, low-bandwidth-friendly mobile experience.
+-->
+
+### 1.3 Success Metrics
+
+<!-- Measurable outcomes. Example:
+- X% of registered operators list ≥3 experiences within 2 months.
+- Y% of searches lead to a booking.
+- Average time to complete a booking < 3 minutes.
+-->
+
+## 2. User Personas
+
+### 2.1 Tourist
+
+<!-- Domestic and international tourists. Goals, constraints, typical devices, connectivity issues. -->
+
+### 2.2 Local Operator
+
+<!-- Tour/boat/hotel operators -->
+
+### 2.3 Admin / Ops Team
+
+<!-- My team -->
+
+## 3. Key User Journeys
+
+### 3.1 Tourist Journey
+
+<!--
+- Discover → Filter → View details → Book → Pay → Receive confirmation → Use experience.
+-->
+
+### 3.2 Operator Journey
+
+<!--
+- Onboard → Create experience → Set capacity & pricing → Manage bookings → Payouts.
+-->
+
+### 3.3 Admin Journey
+
+<!-- 
+- Verify operator → Approve/reject experiences → Monitor bookings → Handle issues.
+-->
+
+## 4. Functional Requirements
+
+Use IDs like `FR-<AREA>-<NUMBER>` for traceability.
+
+### 4.1 Discovery & Search
+
+- **FR-DISC-01**: As a tourist, I can search experiences by date, category (e.g., boat, tour, stay), and price range.
+- **FR-DISC-02**: As a tourist, I can see real-time availability for each experience.
+- **FR-DISC-03**: As a tourist, I can view operator ratings and reviews.
+
+<!-- Other Requirements -->
+
+### 4.2 Booking
+
+- **FR-BOOK-01**: As a tourist, I can select date/time, number of participants, and complete a booking.
+- **FR-BOOK-02**: As a tourist, I receive a confirmation with experience details, date/time, participants, total price, and operator contact.
+- **FR-BOOK-03**: As an operator, I can see all bookings in a calendar/list view.
+- **FR-BOOK-04**: As an operator, I can set capacity per time slot and prevent overbooking.
+
+
+### 4.3 Payments
+
+- **FR-PAY-01**: As a tourist, I can pay via mobile money (e.g., M-Pesa) and/or card.
+- **FR-PAY-02**: As an operator, I can see payout status and history.
+- **FR-PAY-03**: As an admin, I can configure commission rates and payout rules.
+
+
+
+### 4.4 Operator Management
+
+- **FR-OP-01**: As an operator, I can create and edit experiences with title, description, photos, price, terms, and capacity.
+- **FR-OP-02**: As an operator, I can save drafts and publish experiences when ready.
+- **FR-OP-03**: As an admin, I can verify operators (KYC) and approve/reject experiences before they appear in search.
+
+
+
+### 4.5 Notifications
+
+- **FR-NOTIF-01**: As a tourist, I receive booking confirmation and reminders via SMS and/or push notification.
+- **FR-NOTIF-02**: As an operator, I receive alerts for new bookings, changes, and cancellations.
+
+
+
+### 4.6 Authentication & Authorization
+
+- **FR-AUTH-01**: Users can register and log in as tourist, operator, or admin.
+- **FR-AUTH-02**: Access to features is restricted by role (tourist, operator, admin).
+
+
+
+## 5. Non-Functional Requirements
+
+Use IDs like `NFR-<AREA>-<NUMBER>`.
+
+### 5.1 Performance
+
+- **NFR-PERF-01**: Search results load in < 2 seconds on 3G connections under normal load.
+- **NFR-PERF-02**: Each step in the booking flow completes in < 3 seconds under normal load.
+
+### 5.2 Availability
+
+- **NFR-AVAIL-01**: System availability of 99% during peak tourist hours (e.g., 08:00–22:00 local time).
+
+### 5.3 Security & Privacy
+
+- **NFR-SEC-01**: All traffic is encrypted using HTTPS.
+- **NFR-SEC-02**: Personal data and payment information are stored securely; raw card data is never stored.
+- **NFR-SEC-03**: Role-based access control is enforced for all API endpoints.
+
+### 5.4 Scalability
+
+- **NFR-SCALE-01**: System supports [X] concurrent users and [Y] bookings per day initially, with a clear path to scale horizontally.
+
+### 5.5 Usability
+
+- **NFR-USE-01**: The app works on low-end Android devices (specify minimum OS version and RAM if known).
+- **NFR-USE-02**: Data usage is minimized via image optimization, caching, and lazy loading.
+
+## 6. Design Constraints
+
+<!-- Constraints:
+- Brand guidelines (colors, logo, tone).
+- Android Material Design conventions.
+- Support for English and Swahili (and any other languages).
+- Compliance with local tourism and payment regulations.
+-->
+
+## 7. Technical Specifications (High Level)
+
+<!-- Stack and architecture:
+- Backend: Python + FastAPI, PostgreSQL, Redis, deployed on AWS ECS.
+- Mobile: Android (Kotlin/Java), MVVM, offline-friendly caching.
+- Integrations: payment gateway (e.g., M-Pesa, Stripe/Paystack), SMS provider, optional maps.
+- Auth: JWT or OAuth2 with roles: tourist, operator, admin.
+-->
+
+## 8. Out of Scope (Initial Version)
+
+<!-- Scope:
+- Multi-country expansion.
+- Complex loyalty programs.
+- In-app chat (start with phone/SMS).
+-->
+
+## 9. Traceability Matrix
+
+
+| Requirement ID | Linked User Stories (IDs) | Main Code Modules | Key Tests | UAT Cases |
+|----------------|---------------------------|-------------------|-----------|-----------|
+| FR-BOOK-04     | STORY-BOOK-02             | booking_service, bookings API | test_booking_service.py (capacity) | Overbooking test scenario |
+| FR-PAY-01      | STORY-PAY-01              | payment_service, payments API | test_payment_service.py | Payment success/failure flows |
+| ...            | ...                       | ...               | ...       | ...       |
+
+## 10. Change Log
+
+Track requirement changes here.
+
+| Date       | Changed By | Description of Change | Affected Requirements | Reason / Notes |
+|------------|------------|------------------------|------------------------|----------------|
+| YYYY-MM-DD |            |                        |                        |                |
+|            |            |                        |                        |                |
