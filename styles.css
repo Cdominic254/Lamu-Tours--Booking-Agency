@@ -84,6 +84,17 @@ button:hover, .book-btn:hover, .book-button:hover, .stay-card-link:hover, .prope
 
 img { image-rendering: auto; }
 
+.site-footer {
+    margin-top: 2rem;
+    padding: 1.25rem 1rem;
+    color: #eaf2ff;
+    background: #14213d;
+    text-align: center;
+    font-size: .9rem;
+}
+
+.site-footer p { margin: 0; color: inherit; line-height: 1.5; }
+
 .motion-ready .scroll-reveal {
     opacity: 0;
     transform: translateY(26px) scale(.98);
