@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 import smtplib
 from datetime import datetime
 from email.message import EmailMessage
@@ -20,8 +21,14 @@ EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in ('1', 'true',
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'false').lower() in ('1', 'true', 'yes')
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path='')
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'lamu-tours-development-secret')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "submissions.db")}'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in ('1', 'true', 'yes')
+database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or f'sqlite:///{os.path.join(BASE_DIR, "submissions.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -122,6 +129,9 @@ class Review(db.Model):
             'comment': self.comment,
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
         }
+
+with app.app_context():
+    db.create_all()
 
 
 def save_submission(submission: dict) -> Submission:
@@ -306,6 +316,10 @@ def reviews():
 
 @app.route('/<path:filename>')
 def static_files(filename):
+    allowed_extensions = {'.html', '.css', '.js', '.svg', '.ico', '.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    extension = os.path.splitext(filename)[1].lower()
+    if extension not in allowed_extensions or filename.startswith(('.', '_')):
+        return {'error': 'Not found'}, 404
     return send_from_directory(BASE_DIR, filename)
 
 @app.route('/contact-submit', methods=['POST'])
@@ -516,4 +530,8 @@ def submissions():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(
+        host=os.environ.get('HOST', '127.0.0.1'),
+        port=int(os.environ.get('PORT', 5000)),
+        debug=os.environ.get('FLASK_DEBUG', 'false').lower() in ('1', 'true', 'yes')
+    )
