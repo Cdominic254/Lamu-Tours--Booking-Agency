@@ -1,0 +1,104 @@
+:root {
+    --ink: #14213d;
+    --blue: #1e3c72;
+    --blue-light: #2a5298;
+    --coral: #ff7e3f;
+    --coral-light: #ff9a56;
+    --paper: #ffffff;
+    --mist: #f4f7fb;
+    --line: #dce5f0;
+    --shadow: 0 16px 40px rgba(20, 33, 61, .12);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+    color: var(--ink);
+    background: radial-gradient(circle at top right, rgba(255, 154, 86, .14), transparent 32rem), linear-gradient(135deg, #eef3f9, #dbe6f2);
+}
+
+header {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(120deg, #14213d, var(--blue-light)) !important;
+}
+
+header::after {
+    position: absolute;
+    right: -5rem;
+    bottom: -7rem;
+    width: 18rem;
+    height: 18rem;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 50%;
+    content: "";
+}
+
+h1, h2, h3, h4 { letter-spacing: .01em; }
+h1 { position: relative; z-index: 1; }
+
+nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    gap: .25rem;
+    background: rgba(20, 33, 61, .96) !important;
+    backdrop-filter: blur(12px);
+}
+
+nav a {
+    margin: 0 !important;
+    border: 1px solid transparent;
+    transition: background .25s ease, color .25s ease, transform .25s ease;
+}
+
+nav a:hover { transform: translateY(-2px); }
+nav .account-link { border-color: rgba(20, 33, 61, .15); }
+
+.container, main {
+    border: 1px solid rgba(255, 255, 255, .8);
+    box-shadow: var(--shadow) !important;
+}
+
+input, select, textarea {
+    background: rgba(255, 255, 255, .94);
+    border-color: var(--line) !important;
+}
+
+button, .book-btn, .book-button, .stay-card-link, .property-form button {
+    transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+
+button:hover, .book-btn:hover, .book-button:hover, .stay-card-link:hover, .property-form button:hover {
+    box-shadow: 0 10px 22px rgba(255, 126, 63, .25);
+}
+
+.tour, .listing, .stay-card, .owner-listing, .attraction {
+    border-color: var(--coral-light);
+    box-shadow: 0 8px 22px rgba(20, 33, 61, .08);
+}
+
+.tour:hover, .listing:hover, .stay-card:hover, .owner-listing:hover, .attraction:hover {
+    box-shadow: 0 14px 30px rgba(20, 33, 61, .14);
+}
+
+img { image-rendering: auto; }
+
+@media (max-width: 700px) {
+    body { overflow-x: hidden; }
+    header { padding: 1.25rem .75rem; }
+    h1 { font-size: 2rem; }
+    nav { display: flex; flex-wrap: wrap; justify-content: center; padding: .5rem; }
+    nav a { padding: .55rem .65rem; font-size: .9rem; }
+    .container { width: calc(100% - 1rem); margin: 1rem auto; padding: 1rem; }
+    input, select, textarea, button { max-width: 100%; }
+    img { max-width: 100%; height: auto; }
+    header::after { right: -8rem; }
+    nav { position: relative; }
+    nav .account-link { margin-left: 0 !important; }
+    h1 { line-height: 1.15; }
+}
+
+@media (max-width: 600px) {
+    main { margin: 1rem; padding: 1.4rem; }
+}

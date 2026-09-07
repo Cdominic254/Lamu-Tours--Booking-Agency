@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact - Lamu Tours & Booking Agency</title>
+    <title>Let’s Plan Your Lamu Escape - Lamu Tours</title>
     <style>
         @keyframes fadeInUp {
             from {
@@ -68,9 +68,11 @@
             transform: translateY(-2px);
         }
         .container {
-            max-width: 1200px;
+            width: calc(100% - 2rem);
+            max-width: 1440px;
             margin: 2rem auto;
             padding: 2rem;
+            box-sizing: border-box;
             background-color: white;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -157,19 +159,24 @@
         a:hover {
             color: #ff9a56;
         }
+        nav { display: flex; align-items: center; flex-wrap: wrap; }
+        .account-link { margin-left: auto !important; background: #ff9a56; color: #1e3c72 !important; font-weight: 700 !important; }
+        .account-link:hover { background: white !important; color: #1e3c72 !important; }
     </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Lamu Tours & Booking Agency</h1>
+        <h1>Let’s Plan Your Lamu Escape</h1>
     </header>
     <nav>
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
-        <a href="dashboard">Dashboard</a>
         <a href="about-lamu.html">About Lamu</a>
         <a href="contact.html">Contact</a>
+        <a href="hospitality.html">Hospitality</a>
+        <a class="account-link" href="login.html">Sign in / Register</a>
     </nav>
     <div class="container">
         <h2>Contact Us</h2>
@@ -182,7 +189,7 @@
             <h3>Follow Us</h3>
             <p>
                 <a href="https://www.tiktok.com/@lamutours" target="_blank" style="margin-right: 1rem; text-decoration: none; color: #000;">📱 TikTok</a>
-                <a href="https://www.instagram.com/lamutours" target="_blank" style="margin-right: 1rem; text-decoration: none; color: #E4405F;">📸 Instagram</a>
+                <a href="https://www.instagram.com/lamutours" target="_blank" style="margin-right: 1rem; text-decoration: none; color: #f3130b;">📸 Instagram</a>
                 <a href="https://www.facebook.com/lamutours" target="_blank" style="margin-right: 1rem; text-decoration: none; color: #1877F2;">📘 Facebook</a>
                 <a href="https://wa.me/254704143718" target="_blank" style="text-decoration: none; color: #25D366;">💬 WhatsApp</a>
             </p>

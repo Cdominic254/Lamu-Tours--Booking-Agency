@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hospitality Listings - Lamu Tours & Booking Agency</title>
+    <title>Find Your Perfect Lamu Stay - Lamu Tours</title>
     <style>
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
@@ -61,9 +61,11 @@
             transform: translateY(-2px);
         }
         .container {
-            max-width: 1200px;
+            width: calc(100% - 2rem);
+            max-width: 1440px;
             margin: 2rem auto;
             padding: 2rem;
+            box-sizing: border-box;
             background-color: white;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -106,23 +108,85 @@
             font-size: 1.1em;
             margin-top: 0.8rem;
         }
+        .owner-panel { margin: 2rem 0; padding: 2rem; border-radius: 12px; background: #f0f8ff; border-top: 4px solid #ff9a56; }
+        .owner-panel h2 { margin-top: 0; }
+        .owner-panel p { color: #555; line-height: 1.6; }
+        .property-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .property-form label { display: flex; flex-direction: column; gap: .4rem; color: #1e3c72; font-weight: 600; }
+        .property-form .full-width { grid-column: 1 / -1; }
+        .property-form input, .property-form select, .property-form textarea { padding: .8rem; border: 2px solid #dfe6ee; border-radius: 6px; font: inherit; }
+        .property-form input:focus, .property-form select:focus, .property-form textarea:focus { outline: none; border-color: #ff9a56; }
+        .property-form button { grid-column: 1 / -1; padding: .85rem 1.2rem; border: 0; border-radius: 6px; background: linear-gradient(135deg, #ff9a56, #ff7e3f); color: white; cursor: pointer; font-weight: 700; }
+        .form-message { display: none; padding: .8rem; border-left: 4px solid #d9534f; background: #fff1f0; color: #a12622; }
+        .form-message.visible { display: block; }
+        .owner-listings { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+        .owner-listing { padding: 1.2rem; border-radius: 8px; background: #f9f9f9; border-left: 4px solid #2a5298; }
+        .owner-listing h3 { margin-top: 0; color: #1e3c72; }
+        .owner-listing p { margin: .4rem 0; color: #555; line-height: 1.5; }
+        .owner-listing img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: .7rem; }
+        nav { display: flex; align-items: center; flex-wrap: wrap; }
+        .account-link { margin-left: auto !important; background: #ff9a56; color: #1e3c72 !important; font-weight: 700 !important; }
+        .account-link:hover { background: white !important; color: #1e3c72 !important; }
+        @media (max-width: 650px) { .property-form { grid-template-columns: 1fr; } .property-form .full-width, .property-form button { grid-column: auto; } }
     </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Hospitality Listings</h1>
+        <h1>Find Your Perfect Lamu Stay</h1>
         <p>List with us at a commission rate and get extra visibility.</p>
     </header>
     <nav>
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
-        <a href="dashboard">Dashboard</a>
         <a href="about-lamu.html">About Lamu</a>
         <a href="contact.html">Contact</a>
         <a href="hospitality.html">Hospitality</a>
+        <a class="account-link" href="login.html">Sign in / Register</a>
     </nav>
     <div class="container">
+        <section class="owner-panel" id="list-property">
+            <h2>List your property</h2>
+            <p>Are you an owner or property manager? Promote your hotel, home, guest house, or villa to travelers searching for a stay in Lamu.</p>
+            <p id="form-message" class="form-message" role="alert"></p>
+            <form class="property-form" action="/property-submit" method="post">
+                <label for="owner-name">Your name
+                    <input id="owner-name" name="owner_name" type="text" autocomplete="name" required>
+                </label>
+                <label for="owner-email">Contact email
+                    <input id="owner-email" name="owner_email" type="email" autocomplete="email" required>
+                </label>
+                <label for="property-name">Property name
+                    <input id="property-name" name="name" type="text" placeholder="e.g. Shela Palm House" required>
+                </label>
+                <label for="property-type">Property type
+                    <select id="property-type" name="property_type" required>
+                        <option value="">Choose a type</option>
+                        <option value="hotel">Hotel</option>
+                        <option value="home">Home</option>
+                        <option value="guest house">Guest house</option>
+                        <option value="villa">Villa</option>
+                    </select>
+                </label>
+                <label for="property-location">Location
+                    <input id="property-location" name="location" type="text" placeholder="e.g. Shela, Lamu" required>
+                </label>
+                <label for="property-price">Price per night (USD)
+                    <input id="property-price" name="price_per_night" type="number" min="1" required>
+                </label>
+                <label for="property-guests">Guest capacity
+                    <input id="property-guests" name="guests" type="number" min="1" required>
+                </label>
+                <label for="property-image">Image URL (optional)
+                    <input id="property-image" name="image_url" type="url" placeholder="https://example.com/property.jpg">
+                </label>
+                <label class="full-width" for="property-description">Describe your property
+                    <textarea id="property-description" name="description" rows="4" placeholder="Tell travelers what makes your property special." required></textarea>
+                </label>
+                <button type="submit">Submit property for listing</button>
+            </form>
+        </section>
         <h2>Available Hospitality Partners</h2>
         <div class="listing">
             <h3>Guest Houses</h3>
@@ -154,6 +218,53 @@
             <p>Beach bars and lounge pubs with drinks, music, and relaxed atmosphere.</p>
             <p class="commission">Commission: 10%</p>
         </div>
+        <h2>Owner listings</h2>
+        <div class="owner-listings" id="owner-listings"><p>Loading recently submitted properties...</p></div>
     </div>
+    <script>
+        const listingError = new URLSearchParams(window.location.search).get('error');
+        if (listingError) {
+            const message = document.getElementById('form-message');
+            message.textContent = listingError;
+            message.classList.add('visible');
+        }
+
+        fetch('/properties')
+            .then((response) => response.json())
+            .then(({ properties }) => {
+                const container = document.getElementById('owner-listings');
+                if (!properties.length) {
+                    container.innerHTML = '<p>No owner listings have been submitted yet.</p>';
+                    return;
+                }
+                container.textContent = '';
+                properties.forEach((property) => {
+                    const card = document.createElement('article');
+                    card.className = 'owner-listing';
+                    if (property.image_url && /^https?:\/\//i.test(property.image_url)) {
+                        const image = document.createElement('img');
+                        image.src = property.image_url;
+                        image.alt = property.name;
+                        card.appendChild(image);
+                    }
+                    const title = document.createElement('h3');
+                    title.textContent = property.name;
+                    card.appendChild(title);
+                    const details = document.createElement('p');
+                    details.textContent = `${property.property_type} · ${property.location}`;
+                    card.appendChild(details);
+                    const price = document.createElement('p');
+                    price.textContent = `From $${property.price_per_night} per night · Up to ${property.guests} guests`;
+                    card.appendChild(price);
+                    const description = document.createElement('p');
+                    description.textContent = property.description;
+                    card.appendChild(description);
+                    container.appendChild(card);
+                });
+            })
+            .catch(() => {
+                document.getElementById('owner-listings').innerHTML = '<p>Owner listings are temporarily unavailable.</p>';
+            });
+    </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking - Lamu Tours & Booking Agency</title>
+    <title>Plan Your Lamu Adventure - Lamu Tours</title>
     <style>
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
@@ -56,9 +56,11 @@
             transform: translateY(-2px);
         }
         .container {
-            max-width: 1200px;
+            width: calc(100% - 2rem);
+            max-width: 1440px;
             margin: 2rem auto;
             padding: 2rem;
+            box-sizing: border-box;
             background-color: white;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -126,22 +128,27 @@
             border-left: 4px solid #ff9a56;
             font-size: 1.1em;
         }
+        nav { display: flex; align-items: center; flex-wrap: wrap; }
+        .account-link { margin-left: auto !important; background: #ff9a56; color: #1e3c72 !important; font-weight: 700 !important; }
+        .account-link:hover { background: white !important; color: #1e3c72 !important; }
     </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Lamu Tours & Booking Agency</h1>
+        <h1>Plan Your Lamu Adventure</h1>
     </header>
     <nav>
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
-        <a href="dashboard">Dashboard</a>
         <a href="about-lamu.html">About Lamu</a>
         <a href="contact.html">Contact</a>
+        <a href="hospitality.html">Hospitality</a>
+        <a class="account-link" href="login.html">Sign in / Register</a>
     </nav>
     <div class="container">
-        <h2>Book Your Tour</h2>
+        <h2>Book Your Tour or Stay</h2>
         <form action="/booking-confirmation" method="post">
             <label for="name">Full Name:</label>
             <input type="text" id="name" name="name" required>
@@ -152,9 +159,9 @@
             <label for="phone">Phone Number:</label>
             <input type="tel" id="phone" name="phone" required>
 
-            <label for="tour">Select Tour:</label>
+            <label for="tour">Select Tour or Stay:</label>
             <select id="tour" name="tour" required>
-                <option value="">Choose a tour</option>
+                <option value="">Choose a tour or stay</option>
                 <option value="dhow">Dhow Trips</option>
                 <option value="old-town">Old Town Walks</option>
                 <option value="sandbank">Sandbank Picnics</option>
@@ -162,6 +169,13 @@
                 <option value="water-sports">Water Sports</option>
                 <option value="day-trips">Day Trips</option>
                 <option value="cultural">Cultural Tours</option>
+                <option value="shela-guest-house">Shela Village Guest House - $35/night</option>
+                <option value="old-town-hotel">Old Town Swahili Hotel - $52/night</option>
+                <option value="manda-beach-home">Manda Island Beach Home - $78/night</option>
+                <option value="shela-palm-villa">Shela Palm Villa - $96/night</option>
+                <option value="mjini-budget-hotel">Lamu Mjini Budget Hotel - $44/night</option>
+                <option value="kipungani-guest-house">Kipungani Coast Guest House - $39/night</option>
+                <option value="manda-ocean-villa">Manda Ocean Villa - $125/night</option>
             </select>
 
             <label for="date">Preferred Date:</label>
@@ -178,33 +192,25 @@
             <label for="message">Special Requests:</label>
             <textarea id="message" name="message" rows="4"></textarea>
 
-            <h3>Payment Details</h3>
-            <label for="card-number">Card Number:</label>
-            <input type="text" id="card-number" name="card-number" placeholder="1234 5678 9012 3456" required>
-
-            <label for="expiry">Expiry Date:</label>
-            <input type="text" id="expiry" name="expiry" placeholder="MM/YY" required>
-
-            <label for="cvv">CVV:</label>
-            <input type="text" id="cvv" name="cvv" placeholder="123" required>
-
-            <label for="card-name">Name on Card:</label>
-            <input type="text" id="card-name" name="card-name" required>
-
-            <p style="font-size: 0.9em; color: #666;">Your payment information is secure and encrypted.</p>
-
-            <button type="submit">Submit Booking & Pay</button>
+            <button type="submit">Submit Booking Request</button>
         </form>
     </div>
     <script>
         const tourPrices = {
-            dhow: 80,
-            'old-town': 50,
-            sandbank: 70,
-            fishing: 90,
-            'water-sports': 85,
-            'day-trips': 75,
-            cultural: 60
+            dhow: 180,
+            'old-town': 150,
+            sandbank: 170,
+            fishing: 190,
+            'water-sports': 185,
+            'day-trips': 175,
+            cultural: 160,
+            'shela-guest-house': 35,
+            'old-town-hotel': 52,
+            'manda-beach-home': 78,
+            'shela-palm-villa': 96,
+            'mjini-budget-hotel': 44,
+            'kipungani-guest-house': 39,
+            'manda-ocean-villa': 125
         };
 
         function calculateTotal() {
@@ -226,6 +232,17 @@
 
         document.getElementById('tour').addEventListener('change', calculateTotal);
         document.getElementById('guests').addEventListener('input', calculateTotal);
+
+        const bookingParams = new URLSearchParams(window.location.search);
+        const selectedStay = bookingParams.get('stay');
+        const selectedTour = bookingParams.get('tour');
+        const selectedGuests = bookingParams.get('guests');
+        const selectedBooking = selectedStay || selectedTour;
+        if (selectedBooking) {
+            document.getElementById('tour').value = selectedBooking;
+            if (selectedGuests) document.getElementById('guests').value = selectedGuests;
+            calculateTotal();
+        }
     </script>
 </body>
 </html>

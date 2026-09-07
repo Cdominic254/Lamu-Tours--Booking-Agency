@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Confirmation - Lamu Tours & Booking Agency</title>
+    <title>Your Lamu Adventure Starts Here</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -25,9 +25,11 @@
             font-size: 3.5em;
         }
         .container {
-            max-width: 900px;
+            width: calc(100% - 2rem);
+            max-width: 1100px;
             margin: 2rem auto;
             padding: 2rem;
+            box-sizing: border-box;
             background-color: white;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -57,12 +59,24 @@
         a:hover {
             text-decoration: underline;
         }
+        .account-link { padding: .6rem .8rem; border-radius: 6px; background: #ff9a56; color: #1e3c72 !important; font-weight: 700; text-decoration: none; }
+        .account-link:hover { background: white; text-decoration: none; }
     </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Booking Confirmation</h1>
+        <h1>Your Lamu Adventure Starts Here</h1>
     </header>
+    <nav style="background: linear-gradient(90deg, #2a5298 0%, #1e3c72 100%); padding: .8rem; text-align: center;">
+        <a href="index.html" style="color: white; margin: 0 .7rem;">Home</a>
+        <a href="tours.html" style="color: white; margin: 0 .7rem;">Tours</a>
+        <a href="booking.html" style="color: white; margin: 0 .7rem;">Booking</a>
+        <a href="about-lamu.html" style="color: white; margin: 0 .7rem;">About Lamu</a>
+        <a href="contact.html" style="color: white; margin: 0 .7rem;">Contact</a>
+        <a href="hospitality.html" style="color: white; margin: 0 .7rem;">Hospitality</a>
+        <a href="login.html" class="account-link" style="color: #1e3c72; margin: 0 .7rem;">Sign in / Register</a>
+    </nav>
     <div class="container">
         <h2>Your booking request is confirmed</h2>
         <p>Thank you for booking with Lamu Tours & Booking Agency. We have received your request and one of our travel advisors will contact you shortly to confirm the details.</p>

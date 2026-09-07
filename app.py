@@ -3,8 +3,9 @@ import os
 import smtplib
 from datetime import datetime
 from email.message import EmailMessage
-from flask import Flask, request, send_from_directory, render_template_string
+from flask import Flask, redirect, request, send_from_directory, render_template_string, session
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_FILE = os.path.join(BASE_DIR, 'submissions.json')
@@ -19,6 +20,7 @@ EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in ('1', 'true',
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'false').lower() in ('1', 'true', 'yes')
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path='')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'lamu-tours-development-secret')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "submissions.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -67,6 +69,39 @@ class Booking(db.Model):
             'guests': self.guests,
             'message': self.message,
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None
+        }
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Property(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    owner_name = db.Column(db.String(100), nullable=False)
+    owner_email = db.Column(db.String(120), nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    property_type = db.Column(db.String(50), nullable=False)
+    location = db.Column(db.String(120), nullable=False)
+    price_per_night = db.Column(db.Integer, nullable=False)
+    guests = db.Column(db.Integer, nullable=False)
+    image_url = db.Column(db.String(500), nullable=True)
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'owner_name': self.owner_name,
+            'name': self.name,
+            'property_type': self.property_type,
+            'location': self.location,
+            'price_per_night': self.price_per_night,
+            'guests': self.guests,
+            'image_url': self.image_url,
+            'description': self.description,
         }
 
 
@@ -140,6 +175,88 @@ def send_email_notification(submission: dict) -> bool:
 @app.route('/')
 def index():
     return send_from_directory(BASE_DIR, 'index.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'GET':
+        return send_from_directory(BASE_DIR, 'register.html')
+
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip().lower()
+    password = request.form.get('password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+    if not name or not email or not password:
+        return redirect('/register.html?error=Please%20complete%20all%20fields.')
+    if len(password) < 8:
+        return redirect('/register.html?error=Password%20must%20be%20at%20least%208%20characters.')
+    if password != confirm_password:
+        return redirect('/register.html?error=Passwords%20do%20not%20match.')
+    if User.query.filter_by(email=email).first():
+        return redirect('/register.html?error=An%20account%20with%20that%20email%20already%20exists.')
+
+    user = User(name=name, email=email, password_hash=generate_password_hash(password))
+    db.session.add(user)
+    db.session.commit()
+    session['user_id'] = user.id
+    session['user_name'] = user.name
+    return redirect('/booking.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return send_from_directory(BASE_DIR, 'login.html')
+
+    email = request.form.get('email', '').strip().lower()
+    password = request.form.get('password', '')
+    user = User.query.filter_by(email=email).first()
+    if not user or not check_password_hash(user.password_hash, password):
+        return redirect('/login.html?error=Invalid%20email%20or%20password.')
+
+    session['user_id'] = user.id
+    session['user_name'] = user.name
+    return redirect('/booking.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login.html')
+
+@app.route('/property-submit', methods=['POST'])
+def property_submit():
+    property_type = request.form.get('property_type', '').strip().lower()
+    allowed_types = {'hotel', 'home', 'guest house', 'villa'}
+    try:
+        price_per_night = int(request.form.get('price_per_night', '0'))
+        guests = int(request.form.get('guests', '0'))
+    except ValueError:
+        return redirect('/hospitality.html?error=Price%20and%20guest%20capacity%20must%20be%20numbers#list-property')
+
+    property_data = {
+        'owner_name': request.form.get('owner_name', '').strip(),
+        'owner_email': request.form.get('owner_email', '').strip().lower(),
+        'name': request.form.get('name', '').strip(),
+        'property_type': property_type,
+        'location': request.form.get('location', '').strip(),
+        'price_per_night': price_per_night,
+        'guests': guests,
+        'image_url': request.form.get('image_url', '').strip(),
+        'description': request.form.get('description', '').strip(),
+    }
+    required_values = [property_data['owner_name'], property_data['owner_email'], property_data['name'], property_type, property_data['location'], property_data['description']]
+    if not all(required_values) or property_type not in allowed_types or price_per_night < 1 or guests < 1:
+        return redirect('/hospitality.html?error=Please%20complete%20all%20listing%20fields%20with%20valid%20values#list-property')
+
+    property_listing = Property(**property_data)
+    db.session.add(property_listing)
+    db.session.commit()
+    return render_template_string(
+        '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Property Submitted - Lamu Tours</title><style>body{font-family:'Segoe UI',sans-serif;background:#eef2f7;margin:0;padding:2rem;color:#1e3c72}.card{max-width:650px;margin:0 auto;background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.12)}a{color:#ff7e3f;font-weight:600;text-decoration:none}</style></head><body><div class="card"><h1>Listing received</h1><p>Thank you, {{ listing.owner_name }}. <strong>{{ listing.name }}</strong> has been added to the owner listings.</p><p>Guests can now discover your {{ listing.property_type }} in {{ listing.location }} from ${{ listing.price_per_night }} per night.</p><p><a href="/hospitality.html">Return to hospitality listings</a></p></div></body></html>''', listing=property_listing)
+
+@app.route('/properties', methods=['GET'])
+def properties():
+    listings = Property.query.order_by(Property.created_at.desc()).all()
+    return {'properties': [property_listing.to_dict() for property_listing in listings]}
 
 @app.route('/<path:filename>')
 def static_files(filename):
@@ -249,7 +366,6 @@ def dashboard():
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
-        <a href="dashboard">Dashboard</a>
         <a href="about-lamu.html">About Lamu</a>
         <a href="contact.html">Contact</a>
     </nav>

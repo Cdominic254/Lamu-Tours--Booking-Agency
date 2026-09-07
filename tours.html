@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tours - Lamu Tours & Booking Agency</title>
+    <title>Explore Lamu’s Most Memorable Tours</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -32,9 +32,11 @@
             background-color: #555;
         }
         .container {
-            max-width: 1200px;
+            width: calc(100% - 2rem);
+            max-width: 1440px;
             margin: 2rem auto;
             padding: 1rem;
+            box-sizing: border-box;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -124,29 +126,85 @@
             color: #1e3c72;
             text-decoration: underline;
         }
+        .tour-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1rem; }
+        .tour-actions a { padding: .65rem 1rem; border-radius: 6px; text-decoration: none; font-weight: 700; }
+        .tour-actions .details-button { background: #eaf2ff; color: #1e3c72; }
+        .tour-actions .book-button { background: linear-gradient(135deg, #ff9a56, #ff7e3f); color: white; box-shadow: 0 4px 12px rgba(255,154,86,.25); }
+        .tour-actions a:hover { color: white; text-decoration: none; transform: translateY(-2px); }
+        .tour-actions .details-button:hover { background: #2a5298; }
+        .tour-actions .book-button:hover { background: #1e3c72; }
+        nav { display: flex; align-items: center; flex-wrap: wrap; }
+        .account-link { margin-left: auto !important; background: #ff9a56; color: #1e3c72 !important; font-weight: 700 !important; }
+        .account-link:hover { background: white !important; color: #1e3c72 !important; }
+        .coast-showcase {
+            margin: 1rem 0 2.5rem;
+            padding: 1.5rem;
+            border-radius: 10px;
+            background: #f0f8ff;
+            border-left: 4px solid #ff9a56;
+        }
+        .coast-showcase h2 { margin-top: 0; }
+        .coast-showcase-intro { color: #555; line-height: 1.6; }
+        .coast-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: .8rem;
+            margin-top: 1.2rem;
+        }
+        .coast-photo { position: relative; overflow: hidden; min-height: 180px; margin: 0; border-radius: 8px; background: #dfe8f2; }
+        .coast-photo:nth-child(2), .coast-photo:nth-child(5) { grid-row: span 2; min-height: 375px; }
+        .coast-photo img { width: 100%; height: 100%; min-height: 180px; object-fit: cover; display: block; transition: transform .4s ease; }
+        .coast-photo:hover img { transform: scale(1.07); }
+        .coast-photo figcaption { position: absolute; right: 0; bottom: 0; left: 0; padding: 2rem .8rem .7rem; color: white; font-weight: 600; background: linear-gradient(transparent, rgba(0,0,0,.75)); }
+        @media (max-width: 800px) { .coast-grid { grid-template-columns: repeat(2, 1fr); } .coast-photo:nth-child(2), .coast-photo:nth-child(5) { min-height: 280px; } }
+        @media (max-width: 700px) {
+            .tour { flex-direction: column; gap: 1rem; }
+            .tour-image { width: 100%; height: 220px; }
+        }
+        @media (max-width: 520px) { .coast-grid { grid-template-columns: 1fr; } .coast-photo, .coast-photo:nth-child(2), .coast-photo:nth-child(5) { min-height: 220px; grid-row: auto; } }
     </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Lamu Tours & Booking Agency</h1>
+        <h1>Explore Lamu’s Most Memorable Tours</h1>
     </header>
     <nav>
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
-        <a href="dashboard">Dashboard</a>
         <a href="about-lamu.html">About Lamu</a>
         <a href="contact.html">Contact</a>
+        <a href="hospitality.html">Hospitality</a>
+        <a class="account-link" href="login.html">Sign in / Register</a>
     </nav>
     <div class="container">
         <h2>Available Tours</h2>
+        <section class="coast-showcase" aria-labelledby="coast-showcase-title">
+            <h2 id="coast-showcase-title">Explore the Lamu Coast</h2>
+            <p class="coast-showcase-intro">See the beaches, boats, villages, and island landscapes waiting beyond the next tour.</p>
+            <div class="coast-grid">
+                <figure class="coast-photo"><img src="pictures/187168867.jpg" alt="Lamu coast and turquoise ocean"><figcaption>Turquoise coastal waters</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/187747945.jpg" alt="Lamu beach shoreline"><figcaption>Quiet island beaches</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/22151705.jpg" alt="Traditional boat near the Lamu coast"><figcaption>Dhow sailing routes</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/292079957.jpg" alt="Coastal accommodation in Lamu"><figcaption>Stay beside the sea</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/426299433.jpg" alt="Lamu island coastal view"><figcaption>Island horizons</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/552015001.jpg" alt="Lamu waterfront scene"><figcaption>Waterfront life</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/633854419.jpg" alt="Lamu sandy beach and ocean"><figcaption>Sandbank escapes</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/772777203.jpg" alt="Lamu coastal sunset"><figcaption>Sunset on the coast</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/22151750.jpg" alt="Dhow boats on the Lamu water"><figcaption>Traditional dhow boats</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/460469483.jpg" alt="Lamu shoreline and palms"><figcaption>Shoreline walks</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/611137747.jpg" alt="Lamu ocean view from the beach"><figcaption>Open ocean views</figcaption></figure>
+                <figure class="coast-photo"><img src="pictures/787668704.jpg" alt="Lamu coastal village scene"><figcaption>Coastal village life</figcaption></figure>
+            </div>
+        </section>
         <div class="tour">
             <img src="images/shela-lamu-kenya-09.jpg" alt="Dhow Trips" class="tour-image">
             <div class="tour-content">
                 <h3>Dhow Trips</h3>
                 <p>Enjoy traditional dhow sailing around Lamu's coastline with snorkeling and island stops.</p>
-                <p>Duration: Half day | Price: $80 per person</p>
-                <a href="tour-details.html?id=1">View Details</a>
+                <p>Duration: Half day | Price: $180 per person</p>
+                <div class="tour-actions"><a class="details-button" href="tour-details.html?id=1">View Details</a><a class="book-button" href="booking.html?tour=dhow">Book Now</a></div>
             </div>
         </div>
         <div class="tour">
@@ -154,8 +212,8 @@
             <div class="tour-content">
                 <h3>Old Town Walks</h3>
                 <p>Explore the historic streets, architecture, and marketplaces of Lamu Old Town.</p>
-                <p>Duration: 3 hours | Price: $50 per person</p>
-                <a href="tour-details.html?id=2">View Details</a>
+                <p>Duration: 3 hours | Price: $150 per person</p>
+                <div class="tour-actions"><a class="details-button" href="tour-details.html?id=2">View Details</a><a class="book-button" href="booking.html?tour=old-town">Book Now</a></div>
             </div>
         </div>
         <div class="tour">
@@ -163,8 +221,8 @@
             <div class="tour-content">
                 <h3>Sandbank Picnics</h3>
                 <p>Relax on a private sandbank with picnic lunch, swimming, and beach activities.</p>
-                <p>Duration: Half day | Price: $70 per person</p>
-                <a href="tour-details.html?id=3">View Details</a>
+                <p>Duration: Half day | Price: $170 per person</p>
+                <div class="tour-actions"><a class="details-button" href="tour-details.html?id=3">View Details</a><a class="book-button" href="booking.html?tour=sandbank">Book Now</a></div>
             </div>
         </div>
         <div class="tour">
@@ -172,8 +230,8 @@
             <div class="tour-content">
                 <h3>Fishing Trips</h3>
                 <p>Go deep-sea fishing with local crew and enjoy fresh catch barbecue.</p>
-                <p>Duration: Full day | Price: $90 per person</p>
-                <a href="tour-details.html?id=4">View Details</a>
+                <p>Duration: Full day | Price: $190 per person</p>
+                <div class="tour-actions"><a class="details-button" href="tour-details.html?id=4">View Details</a><a class="book-button" href="booking.html?tour=fishing">Book Now</a></div>
             </div>
         </div>
         <div class="tour">
@@ -181,8 +239,8 @@
             <div class="tour-content">
                 <h3>Water Sports</h3>
                 <p>Experience adrenaline with jet skiing, windsurfing, and paddleboarding in clear waters.</p>
-                <p>Duration: Half day | Price: $85 per person</p>
-                <a href="tour-details.html?id=6">View Details</a>
+                <p>Duration: Half day | Price: $185 per person</p>
+                <div class="tour-actions"><a class="details-button" href="tour-details.html?id=6">View Details</a><a class="book-button" href="booking.html?tour=water-sports">Book Now</a></div>
             </div>
         </div>
         <div class="tour">
@@ -190,8 +248,8 @@
             <div class="tour-content">
                 <h3>Day Trips</h3>
                 <p>Explore nearby islands and coastal attractions on a full-day guided excursion.</p>
-                <p>Duration: Full day | Price: $75 per person</p>
-                <a href="tour-details.html?id=7">View Details</a>
+                <p>Duration: Full day | Price: $175 per person</p>
+                <div class="tour-actions"><a class="details-button" href="tour-details.html?id=7">View Details</a><a class="book-button" href="booking.html?tour=day-trips">Book Now</a></div>
             </div>
         </div>
         <div class="tour">
@@ -199,8 +257,8 @@
             <div class="tour-content">
                 <h3>Cultural Tours</h3>
                 <p>Visit museums, traditional workshops, and attend local cultural performances.</p>
-                <p>Duration: 4 hours | Price: $60 per person</p>
-                <a href="tour-details.html?id=5">View Details</a>
+                <p>Duration: 4 hours | Price: $160 per person</p>
+                <div class="tour-actions"><a class="details-button" href="tour-details.html?id=5">View Details</a><a class="book-button" href="booking.html?tour=cultural">Book Now</a></div>
             </div>
         </div>
     </div>

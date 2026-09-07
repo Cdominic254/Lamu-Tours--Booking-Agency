@@ -32,9 +32,11 @@
             background-color: #555;
         }
         .container {
-            max-width: 1200px;
+            width: calc(100% - 2rem);
+            max-width: 1440px;
             margin: 2rem auto;
             padding: 1rem;
+            box-sizing: border-box;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -140,29 +142,208 @@
         .gallery img:nth-child(4) { animation-delay: 0.4s; animation-fill-mode: both; }
         .gallery img:nth-child(5) { animation-delay: 0.5s; animation-fill-mode: both; }
         .gallery img:nth-child(6) { animation-delay: 0.6s; animation-fill-mode: both; }
+        .gallery img:nth-child(7) { animation-delay: 0.7s; animation-fill-mode: both; }
+        .gallery img:nth-child(8) { animation-delay: 0.8s; animation-fill-mode: both; }
+        .gallery img:nth-child(9) { animation-delay: 0.9s; animation-fill-mode: both; }
+        .gallery img:nth-child(10) { animation-delay: 1s; animation-fill-mode: both; }
+        .gallery img:nth-child(11) { animation-delay: 1.1s; animation-fill-mode: both; }
+        .gallery img:nth-child(12) { animation-delay: 1.2s; animation-fill-mode: both; }
         .gallery img:hover {
             transform: scale(1.08) rotate(2deg);
             box-shadow: 0 12px 30px rgba(0,0,0,0.25);
         }
+        .stay-search {
+            margin: 2rem 0 3rem;
+            padding: 2rem;
+            border-radius: 12px;
+            color: white;
+            background: linear-gradient(135deg, rgba(30,60,114,.98), rgba(42,82,152,.94));
+            box-shadow: 0 8px 24px rgba(0,0,0,.18);
+            animation: fadeInUp .8s ease;
+        }
+        .trending-destinations { margin: 2rem 0 3rem; animation: fadeInUp .8s ease; }
+        .trending-destinations h2 { margin-bottom: .5rem; }
+        .trending-intro { color: #555; line-height: 1.6; }
+        .destination-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.25rem; }
+        .destination-card { position: relative; overflow: hidden; min-height: 230px; border-radius: 10px; background: #dfe8f2; box-shadow: 0 6px 18px rgba(0,0,0,.13); }
+        .destination-card img { width: 100%; height: 230px; display: block; object-fit: cover; transition: transform .9s ease, opacity .8s ease; }
+        .destination-card img.is-changing { opacity: .5; transform: scale(.9); }
+        .destination-card:hover img { transform: scale(1.06); }
+        .destination-card-content { position: absolute; right: 0; bottom: 0; left: 0; padding: 2.5rem 1rem 1rem; color: white; background: linear-gradient(transparent, rgba(18,35,67,.9)); }
+        .destination-card h3 { margin: 0 0 .25rem; font-size: 1.25rem; }
+        .destination-card p { margin: 0 0 .7rem; color: #f5f8ff; font-size: .92rem; }
+        .destination-link { display: inline-block; padding: .5rem .7rem; border-radius: 5px; background: #ff7e3f; color: white; text-decoration: none; font-weight: 700; }
+        .destination-link:hover { background: #1e3c72; }
+        .stay-search h2 { margin-top: 0; color: white; border: 0; }
+        .stay-search-intro { color: #eaf2ff; margin-bottom: 1.5rem; }
+        .search-form {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr .9fr .8fr auto;
+            gap: .8rem;
+            align-items: end;
+        }
+        .search-form label { display: flex; flex-direction: column; gap: .4rem; color: white; font-weight: 600; }
+        .search-form input, .search-form select {
+            min-width: 0;
+            padding: .85rem;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            font: inherit;
+            color: #333;
+        }
+        .search-form input:focus, .search-form select:focus { outline: none; border-color: #ff9a56; }
+        .search-form button {
+            align-self: end;
+            min-height: 47px;
+            padding: .85rem 1.2rem;
+            border: 0;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #ff9a56, #ff7e3f);
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+        .search-form button:hover { transform: translateY(-2px); }
+        .stay-results { margin-top: 1.5rem; }
+        .stay-results-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: white; }
+        .stay-results-header h3 { margin: 0; }
+        .stay-results-header p { margin: 0; color: #eaf2ff; }
+        .stay-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .stay-card { overflow: hidden; background: white; color: #333; border-radius: 10px; box-shadow: 0 5px 14px rgba(0,0,0,.15); }
+        .stay-card img { width: 100%; height: 145px; object-fit: cover; }
+        .stay-card-content { padding: 1rem; }
+        .stay-card h4 { margin: 0 0 .35rem; color: #1e3c72; }
+        .stay-card p { margin: .35rem 0; line-height: 1.5; }
+        .stay-price { color: #e96932; font-size: 1.15rem; font-weight: 700; }
+        .stay-type { color: #666; font-size: .9rem; }
+        .stay-card-link { display: inline-block; margin-top: .6rem; padding: .55rem .75rem; border-radius: 5px; background: #ff7e3f; color: white; text-decoration: none; font-weight: 600; }
+        .stay-card-link:hover { background: #1e3c72; }
+        nav { display: flex; align-items: center; flex-wrap: wrap; }
+        .account-link { margin-left: auto !important; background: #ff9a56; color: #1e3c72 !important; font-weight: 700 !important; }
+        .account-link:hover { background: white !important; color: #1e3c72 !important; }
+        .no-results { margin: 1rem 0 0; padding: 1rem; border-radius: 6px; background: rgba(255,255,255,.12); color: white; }
+        @media (max-width: 850px) { .search-form { grid-template-columns: repeat(2, 1fr); } .search-form button { width: 100%; } .destination-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .stay-search { padding: 1.25rem; } .search-form { grid-template-columns: 1fr; } .stay-results-header { align-items: flex-start; flex-direction: column; } .destination-grid { grid-template-columns: 1fr; } }
     </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Welcome to Lamu Tours & Booking Agency</h1>
+        <h1>Discover Lamu: Tours, Stays & Island Experiences</h1>
     </header>
     <nav>
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
-        <a href="dashboard">Dashboard</a>
         <a href="about-lamu.html">About Lamu</a>
         <a href="contact.html">Contact</a>
         <a href="hospitality.html">Hospitality</a>
+        <a class="account-link" href="login.html">Sign in / Register</a>
     </nav>
     <div class="container">
-        <img src="images/shela-lamu-kenya-01.jpg" alt="Lamu Beaches" class="hero">
-        <h2>About Us</h2>
-        <p>Discover the beauty of Lamu with our expert-guided tours and seamless booking services. Explore historical sites, pristine beaches, and cultural experiences.</p>
+        <section class="trending-destinations" aria-labelledby="trending-title">
+            <h2 id="trending-title">Trending destinations around Lamu</h2>
+            <p class="trending-intro">Discover popular coastal neighborhoods and find a hotel, apartment, villa, or home nearby.</p>
+            <div class="destination-grid">
+                <article class="destination-card" data-images="pictures/187747945.jpg,pictures/22151705.jpg,pictures/460469483.jpg">
+                    <img src="pictures/187747945.jpg" alt="Shela beach apartments">
+                    <div class="destination-card-content"><h3>Shela</h3><p>Beach apartments and peaceful villas.</p><a class="destination-link" href="#stay-search-title" data-destination="Shela">Find stays</a></div>
+                </article>
+                <article class="destination-card" data-images="pictures/292079957.jpg,pictures/426299433.jpg,pictures/787668704.jpg">
+                    <img src="pictures/292079957.jpg" alt="Lamu Old Town accommodation">
+                    <div class="destination-card-content"><h3>Lamu Old Town</h3><p>Swahili hotels close to history and culture.</p><a class="destination-link" href="#stay-search-title" data-destination="Old Town">Find stays</a></div>
+                </article>
+                <article class="destination-card" data-images="pictures/552000169.jpg,pictures/633854419.jpg,pictures/772777203.jpg">
+                    <img src="pictures/552000169.jpg" alt="Manda Island holiday home">
+                    <div class="destination-card-content"><h3>Manda Island</h3><p>Ocean homes and spacious private villas.</p><a class="destination-link" href="#stay-search-title" data-destination="Manda">Find stays</a></div>
+                </article>
+                <article class="destination-card" data-images="pictures/426298493.jpg,pictures/611137747.jpg,pictures/460469507.jpg">
+                    <img src="pictures/426298493.jpg" alt="Kipungani guest house near the coast">
+                    <div class="destination-card-content"><h3>Kipungani</h3><p>Quiet guest houses along the coast.</p><a class="destination-link" href="#stay-search-title" data-destination="Kipungani">Find stays</a></div>
+                </article>
+                <article class="destination-card" data-images="pictures/460469483.jpg,pictures/292079967.jpg,pictures/552015001.jpg">
+                    <img src="pictures/460469483.jpg" alt="Lamu Mjini apartment stay">
+                    <div class="destination-card-content"><h3>Lamu Mjini</h3><p>Affordable city stays and apartments.</p><a class="destination-link" href="#stay-search-title" data-destination="Mjini">Find stays</a></div>
+                </article>
+                <article class="destination-card" data-images="pictures/611137747.jpg,pictures/187168867.jpg,pictures/682002056.jpg">
+                    <img src="pictures/611137747.jpg" alt="Lamu coastal holiday accommodation">
+                    <div class="destination-card-content"><h3>Lamu Coast</h3><p>Waterfront escapes for every kind of traveler.</p><a class="destination-link" href="#stay-search-title" data-destination="Lamu">Find stays</a></div>
+                </article>
+            </div>
+        </section>
+        <section class="stay-search" aria-labelledby="stay-search-title">
+            <h2 id="stay-search-title">Find your place to stay</h2>
+            <p class="stay-search-intro">Search low prices on hotels, homes, guest houses and much more across Lamu.</p>
+            <form class="search-form" id="stay-search-form">
+                <label for="stay-destination">Where are you going?
+                    <input id="stay-destination" name="destination" type="search" placeholder="Lamu, Shela or Manda">
+                </label>
+                <label for="stay-check-in">Check-in
+                    <input id="stay-check-in" name="check_in" type="date">
+                </label>
+                <label for="stay-check-out">Check-out
+                    <input id="stay-check-out" name="check_out" type="date">
+                </label>
+                <label for="stay-guests">Guests
+                    <select id="stay-guests" name="guests">
+                        <option value="1">1 guest</option>
+                        <option value="2">2 guests</option>
+                        <option value="3">3 guests</option>
+                        <option value="4">4 guests</option>
+                        <option value="5">5+ guests</option>
+                    </select>
+                </label>
+                <label for="stay-type">Stay type
+                    <select id="stay-type" name="stay_type">
+                        <option value="all">Any type</option>
+                        <option value="hotel">Hotels</option>
+                        <option value="home">Homes</option>
+                        <option value="guest house">Guest houses</option>
+                        <option value="villa">Villas</option>
+                    </select>
+                </label>
+                <button type="submit">Search stays</button>
+            </form>
+            <div class="stay-results" id="stay-results" aria-live="polite">
+                <div class="stay-results-header">
+                    <h3>Affordable stays in Lamu</h3>
+                    <p id="stay-result-count">10 places found</p>
+                </div>
+                <div class="stay-grid" id="stay-grid">
+                    <article class="stay-card" data-location="lamu shela" data-type="guest house" data-guests="2" data-price="35">
+                        <img src="images/shela-village.webp" alt="Shela guest house">
+                        <div class="stay-card-content"><h4>Shela Village Guest House</h4><p class="stay-type">Guest house · Shela</p><p>From <span class="stay-price">$35</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-guest-house&guests=2">Book this stay</a></div>
+                    </article>
+                    <article class="stay-card" data-location="lamu old town" data-type="hotel" data-guests="3" data-price="52">
+                        <img src="images/Lamu_Fort_Museum's.jpg" alt="Lamu Old Town hotel">
+                        <div class="stay-card-content"><h4>Old Town Swahili Hotel</h4><p class="stay-type">Hotel · Lamu Old Town</p><p>From <span class="stay-price">$52</span> / night</p><a class="stay-card-link" href="booking.html?stay=old-town-hotel&guests=3">Book this stay</a></div>
+                    </article>
+                    <article class="stay-card" data-location="manda lamu" data-type="home" data-guests="5" data-price="78">
+                        <img src="images/Lamu_coast.jpg" alt="Manda Island holiday home">
+                        <div class="stay-card-content"><h4>Manda Island Beach Home</h4><p class="stay-type">Entire home · Manda</p><p>From <span class="stay-price">$78</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-beach-home&guests=5">Book this stay</a></div>
+                    </article>
+                    <article class="stay-card" data-location="lamu shela" data-type="villa" data-guests="4" data-price="96">
+                        <img src="pictures/187747945.jpg" alt="Shela private villa">
+                        <div class="stay-card-content"><h4>Shela Palm Villa</h4><p class="stay-type">Villa · Shela</p><p>From <span class="stay-price">$96</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-palm-villa&guests=4">Book this stay</a></div>
+                    </article>
+                    <article class="stay-card" data-location="lamu mjini" data-type="hotel" data-guests="2" data-price="44">
+                        <img src="pictures/292079957.jpg" alt="Lamu Mjini hotel room">
+                        <div class="stay-card-content"><h4>Lamu Mjini Budget Hotel</h4><p class="stay-type">Hotel · Lamu Mjini</p><p>From <span class="stay-price">$44</span> / night</p><a class="stay-card-link" href="booking.html?stay=mjini-budget-hotel&guests=2">Book this stay</a></div>
+                    </article>
+                    <article class="stay-card" data-location="lamu kipungani" data-type="guest house" data-guests="3" data-price="39">
+                        <img src="pictures/426298493.jpg" alt="Kipungani guest house">
+                        <div class="stay-card-content"><h4>Kipungani Coast Guest House</h4><p class="stay-type">Guest house · Kipungani</p><p>From <span class="stay-price">$39</span> / night</p><a class="stay-card-link" href="booking.html?stay=kipungani-guest-house&guests=3">Book this stay</a></div>
+                    </article>
+                    <article class="stay-card" data-location="lamu manda" data-type="villa" data-guests="6" data-price="125">
+                        <img src="pictures/552000169.jpg" alt="Manda Island villa">
+                        <div class="stay-card-content"><h4>Manda Ocean Villa</h4><p class="stay-type">Villa · Manda</p><p>From <span class="stay-price">$125</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-ocean-villa&guests=6">Book this stay</a></div>
+                    </article>
+                </div>
+                <p class="no-results" id="stay-no-results" hidden>No stays match those details. Try Lamu, Shela or Manda.</p>
+            </div>
+        </section>
         <h2>Our Services</h2>
         <ul>
             <li>Tour Packages</li>
@@ -170,15 +351,111 @@
             <li>Transportation</li>
             <li>Custom Itineraries</li>
         </ul>
-        <h2>Gallery</h2>
-        <div class="gallery">
-            <img src="images/Lamu_coast.jpg" alt="Lamu Coast">
-            <img src="images/Lamu_Fort_Museum's.jpg" alt="Lamu Fort Museum">
-            <img src="images/Lamu_Donkey_Sanctuary.jpg" alt="Lamu Donkey Sanctuary">
-            <img src="images/shela-village.webp" alt="Shela Village">
-            <img src="images/Lamu,_Kenya_(45275410485).jpeg" alt="Lamu Panorama">
-            <img src="images/Riadha_Mosque_in_Lamu.jpg" alt="Riadha Mosque">
-        </div>
+        <h2>About Us</h2>
+        <p>Discover the beauty of Lamu with our expert-guided tours and seamless booking services. Explore historical sites, pristine beaches, and cultural experiences.</p>
     </div>
+    <script>
+        const stayForm = document.getElementById('stay-search-form');
+        let stayCards = [...document.querySelectorAll('.stay-card')];
+        const resultCount = document.getElementById('stay-result-count');
+        const noResults = document.getElementById('stay-no-results');
+
+        document.querySelectorAll('.destination-card[data-images]').forEach((card) => {
+            const image = card.querySelector('img');
+            const images = card.dataset.images.split(',');
+            let imageIndex = 0;
+            let paused = false;
+
+            const rotateImage = () => {
+                if (paused) return;
+                image.classList.add('is-changing');
+                window.setTimeout(() => {
+                    imageIndex = (imageIndex + 1) % images.length;
+                    image.src = images[imageIndex];
+                    image.classList.remove('is-changing');
+                }, 450);
+            };
+
+            window.setInterval(rotateImage, 3500);
+            card.addEventListener('mouseenter', () => { paused = true; });
+            card.addEventListener('mouseleave', () => { paused = false; });
+        });
+
+        function addOwnerProperty(property) {
+            const card = document.createElement('article');
+            card.className = 'stay-card';
+            card.dataset.location = property.location.toLowerCase();
+            card.dataset.type = property.property_type.toLowerCase();
+            card.dataset.guests = property.guests;
+            card.dataset.price = property.price_per_night;
+
+            const image = document.createElement('img');
+            image.src = property.image_url && /^https?:\/\//i.test(property.image_url)
+                ? property.image_url
+                : 'pictures/view.jpg';
+            image.alt = property.name;
+            card.appendChild(image);
+
+            const content = document.createElement('div');
+            content.className = 'stay-card-content';
+            const title = document.createElement('h4');
+            title.textContent = property.name;
+            content.appendChild(title);
+            const type = document.createElement('p');
+            type.className = 'stay-type';
+            type.textContent = `${property.property_type} · ${property.location}`;
+            content.appendChild(type);
+            const price = document.createElement('p');
+            price.textContent = 'From ';
+            const priceValue = document.createElement('span');
+            priceValue.className = 'stay-price';
+            priceValue.textContent = `$${property.price_per_night}`;
+            price.appendChild(priceValue);
+            price.appendChild(document.createTextNode(' / night'));
+            content.appendChild(price);
+            const link = document.createElement('a');
+            link.className = 'stay-card-link';
+            link.href = 'hospitality.html#owner-listings';
+            link.textContent = 'View property';
+            content.appendChild(link);
+            card.appendChild(content);
+            document.getElementById('stay-grid').appendChild(card);
+            stayCards.push(card);
+        }
+
+        fetch('/properties')
+            .then((response) => response.ok ? response.json() : Promise.reject(new Error('Properties unavailable')))
+            .then(({ properties }) => {
+                properties.forEach(addOwnerProperty);
+                resultCount.textContent = `${stayCards.length} places found`;
+            })
+            .catch(() => {
+                resultCount.textContent = `${stayCards.length} places found`;
+            });
+
+        stayForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const destination = document.getElementById('stay-destination').value.trim().toLowerCase();
+            const guests = Number(document.getElementById('stay-guests').value);
+            const stayType = document.getElementById('stay-type').value;
+            let matches = stayCards.filter((card) => {
+                const locationMatches = !destination || card.dataset.location.includes(destination);
+                const typeMatches = stayType === 'all' || card.dataset.type === stayType;
+                return locationMatches && typeMatches && Number(card.dataset.guests) >= guests;
+            });
+            matches.sort((first, second) => Number(first.dataset.price) - Number(second.dataset.price));
+            stayCards.forEach((card) => { card.hidden = !matches.includes(card); });
+            resultCount.textContent = `${matches.length} ${matches.length === 1 ? 'place' : 'places'} found`;
+            noResults.hidden = matches.length > 0;
+            document.getElementById('stay-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        document.querySelectorAll('[data-destination]').forEach((link) => {
+            link.addEventListener('click', () => {
+                document.getElementById('stay-destination').value = link.dataset.destination;
+                stayForm.requestSubmit();
+            });
+        });
+    </script>
 </body>
 </html>
