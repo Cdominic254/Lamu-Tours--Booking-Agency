@@ -312,10 +312,16 @@ def contact_submit():
 
 @app.route('/booking-confirmation', methods=['POST'])
 def booking_confirmation():
+    allowed_country_codes = {'+1', '+27', '+44', '+91', '+254', '+255', '+256', '+971'}
+    country_code = request.form.get('country_code', '').strip()
+    phone = request.form.get('phone', '').strip()
+    if country_code not in allowed_country_codes or not phone.isdigit():
+        return redirect('/booking.html?error=Select%20a%20country%20code%20and%20enter%20numbers%20only')
+
     booking = {
         'name': request.form.get('name', 'Guest'),
         'email': request.form.get('email', ''),
-        'phone': request.form.get('phone', ''),
+        'phone': f'{country_code}{phone}',
         'tour': request.form.get('tour', ''),
         'date': request.form.get('date', ''),
         'time': request.form.get('time', ''),

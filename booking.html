@@ -131,6 +131,10 @@
         nav { display: flex; align-items: center; flex-wrap: wrap; }
         .account-link { margin-left: auto !important; background: #ff9a56; color: #1e3c72 !important; font-weight: 700 !important; }
         .account-link:hover { background: white !important; color: #1e3c72 !important; }
+        .booking-error { display: none; margin: 1rem 0; padding: .8rem 1rem; border-left: 4px solid #d9534f; border-radius: 6px; background: #fff1f0; color: #a12622; }
+        .booking-error.visible { display: block; }
+        .phone-fields { display: grid; grid-template-columns: minmax(150px, .35fr) 1fr; gap: .7rem; }
+        @media (max-width: 480px) { .phone-fields { grid-template-columns: 1fr; } }
     </style>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -149,6 +153,7 @@
     </nav>
     <div class="container">
         <h2>Book Your Tour or Stay</h2>
+        <p id="booking-error" class="booking-error" role="alert"></p>
         <form action="/booking-confirmation" method="post">
             <label for="name">Full Name:</label>
             <input type="text" id="name" name="name" required>
@@ -157,7 +162,19 @@
             <input type="email" id="email" name="email" required>
 
             <label for="phone">Phone Number:</label>
-            <input type="tel" id="phone" name="phone" required>
+            <div class="phone-fields">
+                <select id="country-code" name="country_code" aria-label="Country code" required>
+                    <option value="+254" selected>Kenya (+254)</option>
+                    <option value="+1">United States/Canada (+1)</option>
+                    <option value="+44">United Kingdom (+44)</option>
+                    <option value="+255">Tanzania (+255)</option>
+                    <option value="+256">Uganda (+256)</option>
+                    <option value="+27">South Africa (+27)</option>
+                    <option value="+91">India (+91)</option>
+                    <option value="+971">United Arab Emirates (+971)</option>
+                </select>
+                <input type="tel" id="phone" name="phone" inputmode="numeric" pattern="[0-9]+" title="Enter numbers only, without the country code" placeholder="704143718" required>
+            </div>
 
             <label for="tour">Select Tour or Stay:</label>
             <select id="tour" name="tour" required>
@@ -234,10 +251,16 @@
         document.getElementById('guests').addEventListener('input', calculateTotal);
 
         const bookingParams = new URLSearchParams(window.location.search);
+        const bookingError = bookingParams.get('error');
         const selectedStay = bookingParams.get('stay');
         const selectedTour = bookingParams.get('tour');
         const selectedGuests = bookingParams.get('guests');
         const selectedBooking = selectedStay || selectedTour;
+        if (bookingError) {
+            const errorMessage = document.getElementById('booking-error');
+            errorMessage.textContent = bookingError;
+            errorMessage.classList.add('visible');
+        }
         if (selectedBooking) {
             document.getElementById('tour').value = selectedBooking;
             if (selectedGuests) document.getElementById('guests').value = selectedGuests;
