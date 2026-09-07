@@ -104,6 +104,25 @@ class Property(db.Model):
             'description': self.description,
         }
 
+class Review(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    reviewer_name = db.Column(db.String(100), nullable=False)
+    reviewer_email = db.Column(db.String(120), nullable=False)
+    place = db.Column(db.String(150), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    comment = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'reviewer_name': self.reviewer_name,
+            'place': self.place,
+            'rating': self.rating,
+            'comment': self.comment,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
+        }
+
 
 def save_submission(submission: dict) -> Submission:
     new_submission = Submission(
@@ -257,6 +276,33 @@ def property_submit():
 def properties():
     listings = Property.query.order_by(Property.created_at.desc()).all()
     return {'properties': [property_listing.to_dict() for property_listing in listings]}
+
+@app.route('/review-submit', methods=['POST'])
+def review_submit():
+    try:
+        rating = int(request.form.get('rating', '0'))
+    except ValueError:
+        rating = 0
+
+    review_data = {
+        'reviewer_name': request.form.get('reviewer_name', '').strip(),
+        'reviewer_email': request.form.get('reviewer_email', '').strip().lower(),
+        'place': request.form.get('place', '').strip(),
+        'rating': rating,
+        'comment': request.form.get('comment', '').strip(),
+    }
+    if not all([review_data['reviewer_name'], review_data['reviewer_email'], review_data['place'], review_data['comment']]) or rating not in range(1, 6):
+        return redirect('/hospitality.html?review_error=Please%20complete%20the%20review%20form%20and%20choose%20a%20rating#reviews')
+
+    review = Review(**review_data)
+    db.session.add(review)
+    db.session.commit()
+    return redirect('/hospitality.html?review_success=Your%20review%20was%20published#reviews')
+
+@app.route('/reviews', methods=['GET'])
+def reviews():
+    recent_reviews = Review.query.order_by(Review.created_at.desc()).limit(50).all()
+    return {'reviews': [review.to_dict() for review in recent_reviews]}
 
 @app.route('/<path:filename>')
 def static_files(filename):

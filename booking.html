@@ -137,6 +137,7 @@
         @media (max-width: 480px) { .phone-fields { grid-template-columns: 1fr; } }
     </style>
     <link rel="stylesheet" href="styles.css">
+    <script src="animations.js" defer></script>
 </head>
 <body>
     <header>
@@ -154,7 +155,7 @@
     <div class="container">
         <h2>Book Your Tour or Stay</h2>
         <p id="booking-error" class="booking-error" role="alert"></p>
-        <form action="/booking-confirmation" method="post">
+        <form id="booking-form" action="/booking-confirmation" method="post">
             <label for="name">Full Name:</label>
             <input type="text" id="name" name="name" required>
 
@@ -266,6 +267,16 @@
             if (selectedGuests) document.getElementById('guests').value = selectedGuests;
             calculateTotal();
         }
+
+        const dateInput = document.getElementById('date');
+        const today = new Date();
+        dateInput.min = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+        document.getElementById('booking-form').addEventListener('submit', (event) => {
+            if (!document.getElementById('booking-form').checkValidity()) return;
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Sending request...';
+        });
     </script>
 </body>
 </html>

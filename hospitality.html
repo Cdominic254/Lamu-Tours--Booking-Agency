@@ -124,12 +124,30 @@
         .owner-listing h3 { margin-top: 0; color: #1e3c72; }
         .owner-listing p { margin: .4rem 0; color: #555; line-height: 1.5; }
         .owner-listing img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: .7rem; }
+        .review-panel { margin: 2rem 0; padding: 2rem; border-radius: 12px; background: #fffaf5; border-top: 4px solid #2a5298; }
+        .review-panel h2 { margin-top: 0; }
+        .review-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .review-form label { display: flex; flex-direction: column; gap: .4rem; color: #1e3c72; font-weight: 600; }
+        .review-form .full-width { grid-column: 1 / -1; }
+        .review-form input, .review-form select, .review-form textarea { padding: .8rem; border: 2px solid #dfe6ee; border-radius: 6px; font: inherit; }
+        .review-form button { grid-column: 1 / -1; padding: .85rem 1.2rem; border: 0; border-radius: 6px; background: linear-gradient(135deg, #2a5298, #1e3c72); color: white; cursor: pointer; font-weight: 700; }
+        .review-message { display: none; margin: 1rem 0; padding: .8rem; border-radius: 6px; }
+        .review-message.visible { display: block; }
+        .review-success { background: #eaf8ef; color: #216b3a; border-left: 4px solid #2e9d59; }
+        .review-error { background: #fff1f0; color: #a12622; border-left: 4px solid #d9534f; }
+        .review-list { display: grid; gap: 1rem; }
+        .review-card { padding: 1.2rem; border-radius: 8px; background: #f9f9f9; border-left: 4px solid #ff9a56; }
+        .review-card h3 { margin: 0; color: #1e3c72; }
+        .review-card p { margin: .45rem 0 0; color: #555; line-height: 1.5; }
+        .review-stars { color: #e96932; letter-spacing: .1em; }
+        @media (max-width: 650px) { .review-form { grid-template-columns: 1fr; } .review-form .full-width, .review-form button { grid-column: auto; } }
         nav { display: flex; align-items: center; flex-wrap: wrap; }
         .account-link { margin-left: auto !important; background: #ff9a56; color: #1e3c72 !important; font-weight: 700 !important; }
         .account-link:hover { background: white !important; color: #1e3c72 !important; }
         @media (max-width: 650px) { .property-form { grid-template-columns: 1fr; } .property-form .full-width, .property-form button { grid-column: auto; } }
     </style>
     <link rel="stylesheet" href="styles.css">
+    <script src="animations.js" defer></script>
 </head>
 <body>
     <header>
@@ -220,50 +238,139 @@
         </div>
         <h2>Owner listings</h2>
         <div class="owner-listings" id="owner-listings"><p>Loading recently submitted properties...</p></div>
+        <section class="review-panel" id="reviews">
+            <h2>Share your Lamu experience</h2>
+            <p>Tell future travelers about a place or stay you visited.</p>
+            <p id="review-success" class="review-message review-success" role="status"></p>
+            <p id="review-error" class="review-message review-error" role="alert"></p>
+            <form class="review-form" action="/review-submit" method="post">
+                <label for="reviewer-name">Your name
+                    <input id="reviewer-name" name="reviewer_name" type="text" required>
+                </label>
+                <label for="reviewer-email">Your email
+                    <input id="reviewer-email" name="reviewer_email" type="email" required>
+                </label>
+                <label for="review-place">Place or stay
+                    <select id="review-place" name="place" required>
+                        <option value="">Choose a place</option>
+                        <option>Shela Village Guest House</option>
+                        <option>Old Town Swahili Hotel</option>
+                        <option>Manda Island Beach Home</option>
+                        <option>Shela Palm Villa</option>
+                        <option>Lamu Old Town</option>
+                        <option>Shela Beach</option>
+                        <option>Dhow Trips</option>
+                    </select>
+                </label>
+                <label for="review-rating">Rating
+                    <select id="review-rating" name="rating" required>
+                        <option value="">Choose a rating</option>
+                        <option value="5">5 - Excellent</option>
+                        <option value="4">4 - Very good</option>
+                        <option value="3">3 - Good</option>
+                        <option value="2">2 - Fair</option>
+                        <option value="1">1 - Needs improvement</option>
+                    </select>
+                </label>
+                <label class="full-width" for="review-comment">Your review
+                    <textarea id="review-comment" name="comment" rows="4" placeholder="What did you enjoy?" required></textarea>
+                </label>
+                <button type="submit">Publish review</button>
+            </form>
+        </section>
+        <h2>Recent reviews</h2>
+        <div class="review-list" id="review-list"><p>Loading reviews...</p></div>
     </div>
     <script>
         const listingError = new URLSearchParams(window.location.search).get('error');
+        const reviewParams = new URLSearchParams(window.location.search);
         if (listingError) {
             const message = document.getElementById('form-message');
             message.textContent = listingError;
             message.classList.add('visible');
         }
 
+        const reviewSuccess = reviewParams.get('review_success');
+        const reviewError = reviewParams.get('review_error');
+        if (reviewSuccess || reviewError) {
+            const message = document.getElementById(reviewSuccess ? 'review-success' : 'review-error');
+            message.textContent = reviewSuccess || reviewError;
+            message.classList.add('visible');
+        }
+
         fetch('/properties')
-            .then((response) => response.json())
+            .then((response) => response.ok ? response.json() : Promise.reject(new Error('Properties unavailable')))
             .then(({ properties }) => {
                 const container = document.getElementById('owner-listings');
                 if (!properties.length) {
                     container.innerHTML = '<p>No owner listings have been submitted yet.</p>';
-                    return;
+                } else {
+                    container.textContent = '';
+                    properties.forEach((property) => {
+                        const card = document.createElement('article');
+                        card.className = 'owner-listing';
+                        if (property.image_url && /^https?:\/\//i.test(property.image_url)) {
+                            const image = document.createElement('img');
+                            image.src = property.image_url;
+                            image.alt = property.name;
+                            card.appendChild(image);
+                        }
+                        const title = document.createElement('h3');
+                        title.textContent = property.name;
+                        card.appendChild(title);
+                        const details = document.createElement('p');
+                        details.textContent = `${property.property_type} · ${property.location}`;
+                        card.appendChild(details);
+                        const price = document.createElement('p');
+                        price.textContent = `From $${property.price_per_night} per night · Up to ${property.guests} guests`;
+                        card.appendChild(price);
+                        const description = document.createElement('p');
+                        description.textContent = property.description;
+                        card.appendChild(description);
+                        container.appendChild(card);
+                    });
                 }
-                container.textContent = '';
+
+                const placeSelect = document.getElementById('review-place');
                 properties.forEach((property) => {
-                    const card = document.createElement('article');
-                    card.className = 'owner-listing';
-                    if (property.image_url && /^https?:\/\//i.test(property.image_url)) {
-                        const image = document.createElement('img');
-                        image.src = property.image_url;
-                        image.alt = property.name;
-                        card.appendChild(image);
-                    }
-                    const title = document.createElement('h3');
-                    title.textContent = property.name;
-                    card.appendChild(title);
-                    const details = document.createElement('p');
-                    details.textContent = `${property.property_type} · ${property.location}`;
-                    card.appendChild(details);
-                    const price = document.createElement('p');
-                    price.textContent = `From $${property.price_per_night} per night · Up to ${property.guests} guests`;
-                    card.appendChild(price);
-                    const description = document.createElement('p');
-                    description.textContent = property.description;
-                    card.appendChild(description);
-                    container.appendChild(card);
+                    const option = document.createElement('option');
+                    option.value = property.name;
+                    option.textContent = property.name;
+                    placeSelect.appendChild(option);
                 });
             })
             .catch(() => {
                 document.getElementById('owner-listings').innerHTML = '<p>Owner listings are temporarily unavailable.</p>';
+            });
+            });
+
+        fetch('/reviews')
+            .then((response) => response.json())
+            .then(({ reviews }) => {
+                const reviewList = document.getElementById('review-list');
+                if (!reviews.length) {
+                    reviewList.innerHTML = '<p>No reviews yet. Be the first to share your experience.</p>';
+                    return;
+                }
+                reviewList.textContent = '';
+                reviews.forEach((review) => {
+                    const card = document.createElement('article');
+                    card.className = 'review-card';
+                    const title = document.createElement('h3');
+                    title.textContent = review.place;
+                    card.appendChild(title);
+                    const meta = document.createElement('p');
+                    meta.className = 'review-stars';
+                    meta.textContent = `${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)} · ${review.reviewer_name}`;
+                    card.appendChild(meta);
+                    const comment = document.createElement('p');
+                    comment.textContent = review.comment;
+                    card.appendChild(comment);
+                    reviewList.appendChild(card);
+                });
+            })
+            .catch(() => {
+                document.getElementById('review-list').innerHTML = '<p>Reviews are temporarily unavailable.</p>';
             });
     </script>
 </body>

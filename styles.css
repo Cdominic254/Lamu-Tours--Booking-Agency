@@ -84,6 +84,22 @@ button:hover, .book-btn:hover, .book-button:hover, .stay-card-link:hover, .prope
 
 img { image-rendering: auto; }
 
+.motion-ready .scroll-reveal {
+    opacity: 0;
+    transform: translateY(26px) scale(.98);
+    transition: opacity .75s ease var(--reveal-delay, 0ms), transform .75s cubic-bezier(.2, .7, .2, 1) var(--reveal-delay, 0ms);
+}
+
+.motion-ready .scroll-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
 @media (max-width: 700px) {
     body { overflow-x: hidden; }
     header { padding: 1.25rem .75rem; }
