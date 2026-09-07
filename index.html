@@ -183,8 +183,11 @@
             align-items: end;
         }
         .search-form label { display: flex; flex-direction: column; gap: .4rem; color: white; font-weight: 600; }
+        .date-range { display: grid; grid-column: span 2; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+        .date-range label { min-width: 0; }
         .search-form input, .search-form select {
             min-width: 0;
+            width: 100%;
             padding: .85rem;
             border: 2px solid transparent;
             border-radius: 6px;
@@ -206,6 +209,9 @@
             white-space: nowrap;
         }
         .search-form button:hover { transform: translateY(-2px); }
+        .search-form input[type="date"] { min-height: 47px; }
+        .date-error { display: none; grid-column: 1 / -1; margin: 0; color: #ffd9d5; font-size: .9rem; }
+        .date-error.visible { display: block; }
         .stay-results { margin-top: 1.5rem; }
         .stay-results-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: white; }
         .stay-results-header h3 { margin: 0; }
@@ -225,9 +231,11 @@
         .account-link:hover { background: white !important; color: #1e3c72 !important; }
         .no-results { margin: 1rem 0 0; padding: 1rem; border-radius: 6px; background: rgba(255,255,255,.12); color: white; }
         @media (max-width: 850px) { .search-form { grid-template-columns: repeat(2, 1fr); } .search-form button { width: 100%; } .destination-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 560px) { .stay-search { padding: 1.25rem; } .search-form { grid-template-columns: 1fr; } .stay-results-header { align-items: flex-start; flex-direction: column; } .destination-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { .stay-search { padding: 1.25rem; } .search-form { grid-template-columns: 1fr; } .date-range { grid-column: auto; } .stay-results-header { align-items: flex-start; flex-direction: column; } .destination-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 380px) { .date-range { grid-template-columns: 1fr; } }
     </style>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
     <script src="animations.js" defer></script>
 </head>
 <body>
@@ -235,6 +243,7 @@
         <h1>Discover Lamu: Tours, Stays & Island Experiences</h1>
     </header>
     <nav>
+        <a class="site-brand" href="index.html"><img class="site-logo" src="logo.svg" alt="Lamu Tours logo"><span>Lamu Tours</span></a>
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
@@ -281,12 +290,14 @@
                 <label for="stay-destination">Where are you going?
                     <input id="stay-destination" name="destination" type="search" placeholder="Lamu, Shela or Manda">
                 </label>
-                <label for="stay-check-in">Check-in
-                    <input id="stay-check-in" name="check_in" type="date">
-                </label>
-                <label for="stay-check-out">Check-out
-                    <input id="stay-check-out" name="check_out" type="date">
-                </label>
+                <div class="date-range" aria-label="Stay dates">
+                    <label for="stay-check-in">Check-in
+                        <input id="stay-check-in" name="check_in" type="date">
+                    </label>
+                    <label for="stay-check-out">Check-out
+                        <input id="stay-check-out" name="check_out" type="date">
+                    </label>
+                </div>
                 <label for="stay-guests">Guests
                     <select id="stay-guests" name="guests">
                         <option value="1">1 guest</option>
@@ -306,6 +317,7 @@
                     </select>
                 </label>
                 <button type="submit">Search stays</button>
+                <p id="date-error" class="date-error" role="alert">Check-out must be after check-in.</p>
             </form>
             <div class="stay-results" id="stay-results" aria-live="polite">
                 <div class="stay-results-header">
@@ -313,33 +325,33 @@
                     <p id="stay-result-count">10 places found</p>
                 </div>
                 <div class="stay-grid" id="stay-grid">
-                    <article class="stay-card" data-location="lamu shela" data-type="guest house" data-guests="2" data-price="35">
+                    <article class="stay-card" data-location="lamu shela" data-type="guest house" data-guests="2" data-price="4500">
                         <img src="images/shela-village.webp" alt="Shela guest house">
-                        <div class="stay-card-content"><h4>Shela Village Guest House</h4><p class="stay-type">Guest house · Shela</p><p>From <span class="stay-price">$35</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-guest-house&guests=2">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Shela Village Guest House</h4><p class="stay-type">Guest house · Shela</p><p>From <span class="stay-price">KSh 4,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-guest-house&guests=2">Book this stay</a></div>
                     </article>
-                    <article class="stay-card" data-location="lamu old town" data-type="hotel" data-guests="3" data-price="52">
+                    <article class="stay-card" data-location="lamu old town" data-type="hotel" data-guests="3" data-price="6500">
                         <img src="images/Lamu_Fort_Museum's.jpg" alt="Lamu Old Town hotel">
-                        <div class="stay-card-content"><h4>Old Town Swahili Hotel</h4><p class="stay-type">Hotel · Lamu Old Town</p><p>From <span class="stay-price">$52</span> / night</p><a class="stay-card-link" href="booking.html?stay=old-town-hotel&guests=3">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Old Town Swahili Hotel</h4><p class="stay-type">Hotel · Lamu Old Town</p><p>From <span class="stay-price">KSh 6,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=old-town-hotel&guests=3">Book this stay</a></div>
                     </article>
-                    <article class="stay-card" data-location="manda lamu" data-type="home" data-guests="5" data-price="78">
+                    <article class="stay-card" data-location="manda lamu" data-type="home" data-guests="5" data-price="10000">
                         <img src="images/Lamu_coast.jpg" alt="Manda Island holiday home">
-                        <div class="stay-card-content"><h4>Manda Island Beach Home</h4><p class="stay-type">Entire home · Manda</p><p>From <span class="stay-price">$78</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-beach-home&guests=5">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Manda Island Beach Home</h4><p class="stay-type">Entire home · Manda</p><p>From <span class="stay-price">KSh 10,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-beach-home&guests=5">Book this stay</a></div>
                     </article>
-                    <article class="stay-card" data-location="lamu shela" data-type="villa" data-guests="4" data-price="96">
+                    <article class="stay-card" data-location="lamu shela" data-type="villa" data-guests="4" data-price="12500">
                         <img src="pictures/187747945.jpg" alt="Shela private villa">
-                        <div class="stay-card-content"><h4>Shela Palm Villa</h4><p class="stay-type">Villa · Shela</p><p>From <span class="stay-price">$96</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-palm-villa&guests=4">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Shela Palm Villa</h4><p class="stay-type">Villa · Shela</p><p>From <span class="stay-price">KSh 12,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-palm-villa&guests=4">Book this stay</a></div>
                     </article>
-                    <article class="stay-card" data-location="lamu mjini" data-type="hotel" data-guests="2" data-price="44">
+                    <article class="stay-card" data-location="lamu mjini" data-type="hotel" data-guests="2" data-price="5500">
                         <img src="pictures/292079957.jpg" alt="Lamu Mjini hotel room">
-                        <div class="stay-card-content"><h4>Lamu Mjini Budget Hotel</h4><p class="stay-type">Hotel · Lamu Mjini</p><p>From <span class="stay-price">$44</span> / night</p><a class="stay-card-link" href="booking.html?stay=mjini-budget-hotel&guests=2">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Lamu Mjini Budget Hotel</h4><p class="stay-type">Hotel · Lamu Mjini</p><p>From <span class="stay-price">KSh 5,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=mjini-budget-hotel&guests=2">Book this stay</a></div>
                     </article>
-                    <article class="stay-card" data-location="lamu kipungani" data-type="guest house" data-guests="3" data-price="39">
+                    <article class="stay-card" data-location="lamu kipungani" data-type="guest house" data-guests="3" data-price="5000">
                         <img src="pictures/426298493.jpg" alt="Kipungani guest house">
-                        <div class="stay-card-content"><h4>Kipungani Coast Guest House</h4><p class="stay-type">Guest house · Kipungani</p><p>From <span class="stay-price">$39</span> / night</p><a class="stay-card-link" href="booking.html?stay=kipungani-guest-house&guests=3">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Kipungani Coast Guest House</h4><p class="stay-type">Guest house · Kipungani</p><p>From <span class="stay-price">KSh 5,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=kipungani-guest-house&guests=3">Book this stay</a></div>
                     </article>
-                    <article class="stay-card" data-location="lamu manda" data-type="villa" data-guests="6" data-price="125">
+                    <article class="stay-card" data-location="lamu manda" data-type="villa" data-guests="6" data-price="16000">
                         <img src="pictures/552000169.jpg" alt="Manda Island villa">
-                        <div class="stay-card-content"><h4>Manda Ocean Villa</h4><p class="stay-type">Villa · Manda</p><p>From <span class="stay-price">$125</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-ocean-villa&guests=6">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Manda Ocean Villa</h4><p class="stay-type">Villa · Manda</p><p>From <span class="stay-price">KSh 16,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-ocean-villa&guests=6">Book this stay</a></div>
                     </article>
                 </div>
                 <p class="no-results" id="stay-no-results" hidden>No stays match those details. Try Lamu, Shela or Manda.</p>
@@ -355,12 +367,30 @@
         <h2>About Us</h2>
         <p>Discover the beauty of Lamu with our expert-guided tours and seamless booking services. Explore historical sites, pristine beaches, and cultural experiences.</p>
     </div>
-    <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p></footer>
+    <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p><div class="footer-partners" aria-label="Partners"><span class="footer-partner">Booking.com</span><span class="footer-partner">Kenya Tourism Board</span><span class="footer-partner">Ministry of Wildlife and Tourism</span></div></footer>
     <script>
         const stayForm = document.getElementById('stay-search-form');
         let stayCards = [...document.querySelectorAll('.stay-card')];
         const resultCount = document.getElementById('stay-result-count');
         const noResults = document.getElementById('stay-no-results');
+        const checkIn = document.getElementById('stay-check-in');
+        const checkOut = document.getElementById('stay-check-out');
+        const dateError = document.getElementById('date-error');
+
+        const today = new Date();
+        const todayValue = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+        checkIn.min = todayValue;
+        checkOut.min = todayValue;
+
+        checkIn.addEventListener('change', () => {
+            checkOut.min = checkIn.value || todayValue;
+            if (checkOut.value && checkOut.value <= checkIn.value) checkOut.value = '';
+            dateError.classList.remove('visible');
+        });
+
+        checkOut.addEventListener('change', () => {
+            dateError.classList.toggle('visible', Boolean(checkIn.value && checkOut.value && checkOut.value <= checkIn.value));
+        });
 
         document.querySelectorAll('.destination-card[data-images]').forEach((card) => {
             const image = card.querySelector('img');
@@ -411,7 +441,7 @@
             price.textContent = 'From ';
             const priceValue = document.createElement('span');
             priceValue.className = 'stay-price';
-            priceValue.textContent = `$${property.price_per_night}`;
+            priceValue.textContent = `KSh ${Number(property.price_per_night).toLocaleString()}`;
             price.appendChild(priceValue);
             price.appendChild(document.createTextNode(' / night'));
             content.appendChild(price);
@@ -437,6 +467,11 @@
 
         stayForm.addEventListener('submit', (event) => {
             event.preventDefault();
+            if (checkIn.value && checkOut.value && checkOut.value <= checkIn.value) {
+                dateError.classList.add('visible');
+                checkOut.focus();
+                return;
+            }
             const destination = document.getElementById('stay-destination').value.trim().toLowerCase();
             const guests = Number(document.getElementById('stay-guests').value);
             const stayType = document.getElementById('stay-type').value;

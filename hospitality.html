@@ -147,6 +147,7 @@
         @media (max-width: 650px) { .property-form { grid-template-columns: 1fr; } .property-form .full-width, .property-form button { grid-column: auto; } }
     </style>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
     <script src="animations.js" defer></script>
 </head>
 <body>
@@ -155,6 +156,7 @@
         <p>List with us at a commission rate and get extra visibility.</p>
     </header>
     <nav>
+        <a class="site-brand" href="index.html"><img class="site-logo" src="logo.svg" alt="Lamu Tours logo"><span>Lamu Tours</span></a>
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
@@ -191,7 +193,7 @@
                     <input id="property-location" name="location" type="text" placeholder="e.g. Shela, Lamu" required>
                 </label>
                 <label for="property-price">Price per night (USD)
-                    <input id="property-price" name="price_per_night" type="number" min="1" required>
+                    <input id="property-price" name="price_per_night" type="number" min="1" placeholder="e.g. 5000" required>
                 </label>
                 <label for="property-guests">Guest capacity
                     <input id="property-guests" name="guests" type="number" min="1" required>
@@ -281,7 +283,7 @@
         <h2>Recent reviews</h2>
         <div class="review-list" id="review-list"><p>Loading reviews...</p></div>
     </div>
-    <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p></footer>
+    <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p><div class="footer-partners" aria-label="Partners"><span class="footer-partner">Booking.com</span><span class="footer-partner">Kenya Tourism Board</span><span class="footer-partner">Ministry of Wildlife and Tourism</span></div></footer>
     <script>
         const listingError = new URLSearchParams(window.location.search).get('error');
         const reviewParams = new URLSearchParams(window.location.search);
@@ -323,7 +325,7 @@
                         details.textContent = `${property.property_type} · ${property.location}`;
                         card.appendChild(details);
                         const price = document.createElement('p');
-                        price.textContent = `From $${property.price_per_night} per night · Up to ${property.guests} guests`;
+                        price.textContent = `From KSh ${Number(property.price_per_night).toLocaleString()} per night · Up to ${property.guests} guests`;
                         card.appendChild(price);
                         const description = document.createElement('p');
                         description.textContent = property.description;
@@ -342,7 +344,6 @@
             })
             .catch(() => {
                 document.getElementById('owner-listings').innerHTML = '<p>Owner listings are temporarily unavailable.</p>';
-            });
             });
 
         fetch('/reviews')

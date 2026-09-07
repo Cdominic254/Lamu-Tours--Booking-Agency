@@ -116,6 +116,7 @@
         .account-link:hover { background: white !important; color: #1e3c72 !important; }
     </style>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
     <script src="animations.js" defer></script>
 </head>
 <body>
@@ -123,6 +124,7 @@
         <h1>Your Lamu Tour, Up Close</h1>
     </header>
     <nav>
+        <a class="site-brand" href="index.html"><img class="site-logo" src="logo.svg" alt="Lamu Tours logo"><span>Lamu Tours</span></a>
         <a href="index.html">Home</a>
         <a href="tours.html">Tours</a>
         <a href="booking.html">Booking</a>
@@ -141,14 +143,14 @@
         <ul id="tour-itinerary"></ul>
         <a href="booking.html" class="book-btn" id="book-btn">Book This Tour</a>
     </div>
-    <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p></footer>
+    <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p><div class="footer-partners" aria-label="Partners"><span class="footer-partner">Booking.com</span><span class="footer-partner">Kenya Tourism Board</span><span class="footer-partner">Ministry of Wildlife and Tourism</span></div></footer>
     <script>
         const tourData = {
             1: {
                 title: 'Dhow Trips',
                 description: 'Enjoy traditional dhow sailing around Lamu’s coastline with snorkeling and island stops.',
                 duration: 'Half day',
-                price: '$180 per person',
+                price: 'KSh 8,500 per person',
                 includes: 'Dhow ride, snorkeling gear, light refreshments',
                 itinerary: ['Meet at the jetty', 'Sail to nearby islands', 'Snorkeling stops', 'Beach relaxation', 'Return at sunset']
             },
@@ -156,7 +158,7 @@
                 title: 'Old Town Walks',
                 description: 'Explore the historic streets, architecture, and marketplaces of Lamu Old Town.',
                 duration: '3 hours',
-                price: '$150 per person',
+                price: 'KSh 3,500 per person',
                 includes: 'Guided walk, cultural insights, local stories',
                 itinerary: ['Meet at agency office', 'Walk through narrow lanes', 'Visit mosques and museums', 'Local art and crafts market', 'Return']
             },
@@ -164,7 +166,7 @@
                 title: 'Sandbank Picnics',
                 description: 'Relax on a private sandbank with picnic lunch, swimming, and beach activities.',
                 duration: 'Half day',
-                price: '$170 per person',
+                price: 'KSh 7,000 per person',
                 includes: 'Boat transfer, picnic lunch, water activities',
                 itinerary: ['Depart by boat', 'Arrive at sandbank', 'Picnic lunch', 'Swimming and sunbathing', 'Return to Lamu']
             },
@@ -172,7 +174,7 @@
                 title: 'Fishing Trips',
                 description: 'Go deep-sea fishing with local crew and enjoy fresh catch barbecue.',
                 duration: 'Full day',
-                price: '$190 per person',
+                price: 'KSh 12,000 per person',
                 includes: 'Fishing equipment, crew, catch cooking',
                 itinerary: ['Meet at pier', 'Head to deep-sea fishing spot', 'Fishing session', 'Cook fresh catch on board', 'Return']
             },
@@ -180,7 +182,7 @@
                 title: 'Cultural Tours',
                 description: 'Visit museums, traditional workshops, and attend local cultural performances.',
                 duration: '4 hours',
-                price: '$160 per person',
+                price: 'KSh 4,000 per person',
                 includes: 'Guided cultural tour, entrance to local sites',
                 itinerary: ['Visit Lamu Museum', 'Traditional Swahili home visit', 'Cultural performance', 'Local crafts demonstration', 'Wrap-up']
             },
@@ -188,7 +190,7 @@
                 title: 'Water Sports',
                 description: 'Experience adrenaline with jet skiing, windsurfing, and paddleboarding in clear waters.',
                 duration: 'Half day',
-                price: '$185 per person',
+                price: 'KSh 9,500 per person',
                 includes: 'Equipment rental, instructor, safety brief',
                 itinerary: ['Meet at beach jetty', 'Safety briefing', 'Jet ski session', 'Windsurfing/paddleboarding', 'Relax on beach']
             },
@@ -196,7 +198,7 @@
                 title: 'Day Trips',
                 description: 'Explore nearby islands and coastal attractions on a full-day guided excursion.',
                 duration: 'Full day',
-                price: '$175 per person',
+                price: 'KSh 9,000 per person',
                 includes: 'Boat transport, lunch, guide',
                 itinerary: ['Depart from jetty', 'Visit nearby island', 'Lunch and beach time', 'Coastal sightseeing', 'Return to Lamu']
             }

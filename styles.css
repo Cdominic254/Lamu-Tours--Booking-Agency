@@ -52,6 +52,25 @@ nav a {
     transition: background .25s ease, color .25s ease, transform .25s ease;
 }
 
+nav .site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    margin-right: .8rem !important;
+    color: white;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+
+.site-brand:hover { background: transparent !important; color: white !important; }
+
+.site-logo {
+    width: 2rem;
+    height: 2rem;
+    border-radius: .55rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .2);
+}
+
 nav a:hover { transform: translateY(-2px); }
 nav .account-link { border-color: rgba(20, 33, 61, .15); }
 
@@ -95,6 +114,23 @@ img { image-rendering: auto; }
 
 .site-footer p { margin: 0; color: inherit; line-height: 1.5; }
 
+.footer-partners {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .6rem;
+    margin-top: .8rem;
+}
+
+.footer-partner {
+    padding: .45rem .7rem;
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-radius: 999px;
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 600;
+}
+
 .motion-ready .scroll-reveal {
     opacity: 0;
     transform: translateY(26px) scale(.98);
@@ -117,6 +153,7 @@ img { image-rendering: auto; }
     h1 { font-size: 2rem; }
     nav { display: flex; flex-wrap: wrap; justify-content: center; padding: .5rem; }
     nav a { padding: .55rem .65rem; font-size: .9rem; }
+    nav .site-brand { width: 100%; justify-content: center; margin: 0 0 .25rem !important; }
     .container { width: calc(100% - 1rem); margin: 1rem auto; padding: 1rem; }
     input, select, textarea, button { max-width: 100%; }
     img { max-width: 100%; height: auto; }
