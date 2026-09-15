@@ -274,7 +274,12 @@
         const dateInput = document.getElementById('date');
         const today = new Date();
         dateInput.min = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-        document.getElementById('booking-form').addEventListener('submit', (event) => {
+        const bookingForm = document.getElementById('booking-form');
+        if (window.location.protocol === 'file:' ||
+            (['localhost', '127.0.0.1'].includes(window.location.hostname) && window.location.port !== '5000')) {
+            bookingForm.action = 'http://127.0.0.1:5000/booking-confirmation';
+        }
+        bookingForm.addEventListener('submit', (event) => {
             if (!document.getElementById('booking-form').checkValidity()) return;
             const submitButton = event.target.querySelector('button[type="submit"]');
             submitButton.disabled = true;
