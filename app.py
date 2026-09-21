@@ -4,9 +4,15 @@ import secrets
 import smtplib
 from datetime import datetime
 from email.message import EmailMessage
+
+import stripe
+from dotenv import load_dotenv
 from flask import Flask, redirect, request, send_from_directory, render_template_string, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from werkzeug.security import check_password_hash, generate_password_hash
+
+load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_FILE = os.path.join(BASE_DIR, 'submissions.json')
@@ -19,12 +25,33 @@ EMAIL_FROM = os.environ.get('EMAIL_FROM', EMAIL_USERNAME)
 EMAIL_TO = os.environ.get('EMAIL_TO', 'info@lamutours.com')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in ('1', 'true', 'yes')
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'false').lower() in ('1', 'true', 'yes')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
+BOOKING_PRICES = {
+    'dhow': 8500,
+    'old-town': 3500,
+    'sandbank': 7000,
+    'fishing': 12000,
+    'water-sports': 9500,
+    'day-trips': 9000,
+    'cultural': 4000,
+    'shela-guest-house': 4500,
+    'old-town-hotel': 6500,
+    'manda-beach-home': 10000,
+    'shela-palm-villa': 12500,
+    'mjini-budget-hotel': 5500,
+    'kipungani-guest-house': 5000,
+    'manda-ocean-villa': 16000,
+}
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in ('1', 'true', 'yes')
+if STRIPE_SECRET_KEY:
+    stripe.api_key = STRIPE_SECRET_KEY
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
@@ -64,6 +91,8 @@ class Booking(db.Model):
     time = db.Column(db.String(20), nullable=False)
     guests = db.Column(db.Integer, nullable=False)
     message = db.Column(db.Text, nullable=True)
+    amount = db.Column(db.Float, nullable=False, default=0.0)
+    payment_status = db.Column(db.String(30), nullable=False, default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -77,6 +106,8 @@ class Booking(db.Model):
             'time': self.time,
             'guests': self.guests,
             'message': self.message,
+            'amount': self.amount,
+            'payment_status': self.payment_status,
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None
         }
 
@@ -132,8 +163,19 @@ class Review(db.Model):
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
         }
 
+def ensure_booking_payment_columns():
+    inspector = db.inspect(db.engine)
+    booking_columns = {column['name'] for column in inspector.get_columns('booking')}
+    with db.engine.begin() as connection:
+        if 'amount' not in booking_columns:
+            connection.execute(text('ALTER TABLE booking ADD COLUMN amount FLOAT NOT NULL DEFAULT 0.0'))
+        if 'payment_status' not in booking_columns:
+            connection.execute(text("ALTER TABLE booking ADD COLUMN payment_status VARCHAR(30) NOT NULL DEFAULT 'pending'"))
+
+
 with app.app_context():
     db.create_all()
+    ensure_booking_payment_columns()
 
 
 def save_submission(submission: dict) -> Submission:
@@ -150,6 +192,20 @@ def save_submission(submission: dict) -> Submission:
     return new_submission
 
 
+def calculate_booking_price(tour: str, guests: int) -> int:
+    if not tour:
+        raise ValueError('Tour is required')
+    normalized_tour = tour.strip()
+    if normalized_tour not in BOOKING_PRICES:
+        raise ValueError(f'Unknown tour: {tour}')
+
+    guest_count = int(guests)
+    if guest_count < 1:
+        raise ValueError('Guests must be at least 1')
+
+    return BOOKING_PRICES[normalized_tour] * guest_count
+
+
 def save_booking(booking: dict) -> Booking:
     new_booking = Booking(
         name=booking['name'],
@@ -160,11 +216,40 @@ def save_booking(booking: dict) -> Booking:
         time=booking['time'],
         guests=int(booking['guests']),
         message=booking.get('message', ''),
+        amount=float(booking.get('amount', 0) or 0),
+        payment_status=booking.get('payment_status', 'pending'),
         created_at=datetime.fromisoformat(booking['timestamp'][:-1]) if booking.get('timestamp') else datetime.utcnow()
     )
     db.session.add(new_booking)
     db.session.commit()
     return new_booking
+
+
+def create_stripe_checkout_session(booking: Booking):
+    if not STRIPE_SECRET_KEY:
+        raise RuntimeError('Stripe is not configured. Set STRIPE_SECRET_KEY to enable payments.')
+
+    line_item_name = booking.tour.replace('-', ' ').title()
+    line_total = int(round(booking.amount * 100))
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'kes',
+                'unit_amount': line_total,
+                'product_data': {
+                    'name': f'Lamu booking: {line_item_name}',
+                    'description': f'{booking.guests} guest(s) for {booking.date} at {booking.time}'
+                },
+            },
+            'quantity': 1,
+        }],
+        mode='payment',
+        success_url=f"{request.host_url}payment-success?booking_id={booking.id}&session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{request.host_url}payment-cancel?booking_id={booking.id}",
+        metadata={'booking_id': str(booking.id)},
+    )
+    return checkout_session.url
 
 
 def send_email_notification(submission: dict) -> bool:
@@ -380,20 +465,85 @@ def booking_confirmation():
     if country_code not in allowed_country_codes or not phone.isdigit():
         return redirect('/booking.html?error=Select%20a%20country%20code%20and%20enter%20numbers%20only')
 
+    tour = request.form.get('tour', '')
+    guests = request.form.get('guests', '1')
+    try:
+        total_amount = calculate_booking_price(tour, guests)
+    except ValueError:
+        return redirect('/booking.html?error=Please%20select%20a%20valid%20tour%20and%20guest%20count')
+
     booking = {
         'name': request.form.get('name', 'Guest'),
         'email': request.form.get('email', ''),
         'phone': f'{country_code}{phone}',
-        'tour': request.form.get('tour', ''),
+        'tour': tour,
         'date': request.form.get('date', ''),
         'time': request.form.get('time', ''),
-        'guests': request.form.get('guests', '1'),
+        'guests': guests,
         'message': request.form.get('message', ''),
+        'amount': total_amount,
+        'payment_status': 'pending',
         'timestamp': datetime.utcnow().isoformat() + 'Z'
     }
     saved_booking = save_booking(booking)
     app.logger.info('Booking request saved: %s', saved_booking.to_dict())
+
+    if STRIPE_SECRET_KEY:
+        try:
+            payment_url = create_stripe_checkout_session(saved_booking)
+            return redirect(payment_url)
+        except Exception as exc:
+            app.logger.exception('Stripe checkout failed for booking %s: %s', saved_booking.id, exc)
+            return send_from_directory(BASE_DIR, 'booking-confirmation.html')
+
     return send_from_directory(BASE_DIR, 'booking-confirmation.html')
+
+
+@app.route('/payment-success')
+def payment_success():
+    booking_id = request.args.get('booking_id')
+    booking = Booking.query.get(int(booking_id)) if booking_id and booking_id.isdigit() else None
+    if booking:
+        booking.payment_status = 'paid'
+        db.session.commit()
+
+    return render_template_string(
+        '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Lamu Tours</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; margin: 0; padding: 2rem; color: #1e3c72; }
+        .card { max-width: 700px; margin: 1.5rem auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+        a { color: #ff7e3f; font-weight: 600; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Payment Successful</h1>
+        <p>Your booking has been confirmed and the payment was received successfully.</p>
+        {% if booking %}
+        <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+        <p><strong>Tour:</strong> {{ booking.tour }}</p>
+        <p><strong>Total paid:</strong> KSh {{ '{:,.0f}'.format(booking.amount) }}</p>
+        {% endif %}
+        <p><a href="/booking.html">Return to bookings</a></p>
+    </div>
+</body>
+</html>''', booking=booking)
+
+
+@app.route('/payment-cancel')
+def payment_cancel():
+    booking_id = request.args.get('booking_id')
+    booking = Booking.query.get(int(booking_id)) if booking_id and booking_id.isdigit() else None
+    if booking:
+        booking.payment_status = 'cancelled'
+        db.session.commit()
+    return redirect('/booking.html?error=Payment%20was%20cancelled.%20Your%20booking%20request%20is%20still%20saved%20and%20can%20be%20resubmitted.')
+
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
