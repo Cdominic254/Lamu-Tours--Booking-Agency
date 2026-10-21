@@ -1,7 +1,15 @@
+import ipaddress
 import json
+import math
 import os
+import re
 import secrets
 import smtplib
+import threading
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime
 from email.message import EmailMessage
 
@@ -15,7 +23,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DATA_FILE = os.path.join(BASE_DIR, 'submissions.json')
 
 EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
@@ -44,6 +51,12 @@ BOOKING_PRICES = {
     'kipungani-guest-house': 5000,
     'manda-ocean-villa': 16000,
 }
+
+CURRENCY_CACHE_TTL = 60 * 60 * 12
+CURRENCY_API_TIMEOUT = 4
+_currency_cache_lock = threading.Lock()
+_exchange_rates_cache = {'expires_at': 0.0, 'rates': None, 'updated_at': None}
+_geolocation_cache = {}
 
 app = Flask(__name__, static_folder=BASE_DIR, static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
@@ -292,6 +305,133 @@ def send_email_notification(submission: dict) -> bool:
 def index():
     return send_from_directory(BASE_DIR, 'index.html')
 
+
+def _fetch_json(url):
+    request_object = urllib.request.Request(
+        url,
+        headers={'Accept': 'application/json', 'User-Agent': 'LamuTours/1.0'}
+    )
+    try:
+        with urllib.request.urlopen(request_object, timeout=CURRENCY_API_TIMEOUT) as response:
+            payload = response.read(1024 * 1024)
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise ValueError('Currency service request failed') from exc
+
+    try:
+        result = json.loads(payload)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError('Currency service returned invalid JSON') from exc
+    if not isinstance(result, dict):
+        raise ValueError('Currency service returned an invalid response')
+    return result
+
+
+def _get_exchange_rates():
+    now = time.time()
+    with _currency_cache_lock:
+        if _exchange_rates_cache['rates'] and _exchange_rates_cache['expires_at'] > now:
+            return _exchange_rates_cache['rates'], _exchange_rates_cache['updated_at']
+
+    data = _fetch_json('https://open.er-api.com/v6/latest/KES')
+    rates = data.get('rates')
+    if data.get('result') != 'success' or not isinstance(rates, dict) or rates.get('KES') != 1:
+        raise ValueError('Exchange rate service returned invalid rates')
+
+    valid_rates = {
+        code: float(rate)
+        for code, rate in rates.items()
+        if re.fullmatch(r'[A-Z]{3}', code)
+        and isinstance(rate, (int, float))
+        and not isinstance(rate, bool)
+        and math.isfinite(rate)
+        and rate > 0
+    }
+    if valid_rates.get('KES') != 1:
+        raise ValueError('Exchange rate service did not return KES rates')
+
+    updated_at = data.get('time_last_update_utc')
+    with _currency_cache_lock:
+        _exchange_rates_cache.update({
+            'expires_at': now + CURRENCY_CACHE_TTL,
+            'rates': valid_rates,
+            'updated_at': updated_at if isinstance(updated_at, str) else None,
+        })
+    return valid_rates, _exchange_rates_cache['updated_at']
+
+
+def _get_client_public_ip():
+    candidates = [*request.access_route, request.remote_addr]
+    for candidate in candidates:
+        try:
+            address = ipaddress.ip_address(candidate)
+        except (TypeError, ValueError):
+            continue
+        if address.is_global:
+            return str(address)
+    return None
+
+
+def _get_geolocation(ip_address):
+    now = time.time()
+    with _currency_cache_lock:
+        cached = _geolocation_cache.get(ip_address)
+        if cached and cached['expires_at'] > now:
+            return cached
+
+    url = f'https://ipapi.co/{urllib.parse.quote(ip_address, safe="")}/json/'
+    data = _fetch_json(url)
+    currency = data.get('currency')
+    country_code = data.get('country_code')
+    if not isinstance(currency, str) or not re.fullmatch(r'[A-Z]{3}', currency):
+        raise ValueError('Geolocation service returned an invalid currency')
+
+    result = {
+        'currency': currency,
+        'country_code': country_code if isinstance(country_code, str) and re.fullmatch(r'[A-Z]{2}', country_code) else None,
+        'expires_at': now + CURRENCY_CACHE_TTL,
+    }
+    with _currency_cache_lock:
+        if len(_geolocation_cache) >= 1024:
+            oldest = min(_geolocation_cache, key=lambda key: _geolocation_cache[key]['expires_at'])
+            del _geolocation_cache[oldest]
+        _geolocation_cache[ip_address] = result
+    return result
+
+
+@app.route('/api/currency', methods=['GET'])
+def currency_info():
+    try:
+        rates, updated_at = _get_exchange_rates()
+    except ValueError as exc:
+        app.logger.warning('Currency rate lookup failed: %s', exc)
+        return {'error': 'Currency rates are temporarily unavailable.'}, 503
+
+    currency = 'KES'
+    country_code = None
+    detected = False
+    ip_address = _get_client_public_ip()
+    if ip_address:
+        try:
+            location = _get_geolocation(ip_address)
+            country_code = location['country_code']
+            if location['currency'] in rates:
+                currency = location['currency']
+                detected = True
+            else:
+                app.logger.warning('Exchange rates do not include the detected currency %s.', location['currency'])
+        except ValueError as exc:
+            app.logger.warning('IP geolocation lookup failed: %s', exc)
+
+    return {
+        'base': 'KES',
+        'currency': currency,
+        'country_code': country_code,
+        'detected': detected,
+        'rates': rates,
+        'updated_at': updated_at,
+    }
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'GET':
@@ -533,6 +673,34 @@ def payment_success():
     </div>
 </body>
 </html>''', booking=booking)
+
+
+@app.route('/stripe-webhook', methods=['POST'])
+def stripe_webhook():
+    if not STRIPE_WEBHOOK_SECRET:
+        app.logger.warning('Stripe webhook called without a configured webhook secret.')
+        return 'Webhook not configured', 400
+
+    payload = request.get_data(as_text=False)
+    signature = request.headers.get('Stripe-Signature', '')
+
+    try:
+        event = stripe.Webhook.construct_event(payload, signature, STRIPE_WEBHOOK_SECRET)
+    except ValueError:
+        return 'Invalid payload', 400
+    except stripe.error.SignatureVerificationError:
+        return 'Invalid signature', 400
+
+    if event.get('type') == 'checkout.session.completed':
+        session_data = event.get('data', {}).get('object', {})
+        booking_id = session_data.get('metadata', {}).get('booking_id')
+        if booking_id and booking_id.isdigit():
+            booking = Booking.query.get(int(booking_id))
+            if booking:
+                booking.payment_status = 'paid'
+                db.session.commit()
+
+    return '', 204
 
 
 @app.route('/payment-cancel')

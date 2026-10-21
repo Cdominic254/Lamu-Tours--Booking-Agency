@@ -236,6 +236,8 @@
     </style>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <script src="localization.js" defer></script>
+    <script src="currency.js" defer></script>
     <script src="animations.js" defer></script>
 </head>
 <body>
@@ -251,6 +253,7 @@
         <a href="contact.html">Contact</a>
         <a href="hospitality.html">Hospitality</a>
         <a class="account-link" href="login.html">Sign in / Register</a>
+        <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Kiswahili">Kiswahili</button>
     </nav>
     <div class="container">
         <section class="trending-destinations" aria-labelledby="trending-title">
@@ -327,31 +330,31 @@
                 <div class="stay-grid" id="stay-grid">
                     <article class="stay-card" data-location="lamu shela" data-type="guest house" data-guests="2" data-price="4500">
                         <img src="images/shela-village.webp" alt="Shela guest house">
-                        <div class="stay-card-content"><h4>Shela Village Guest House</h4><p class="stay-type">Guest house · Shela</p><p>From <span class="stay-price">KSh 4,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-guest-house&guests=2">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Shela Village Guest House</h4><p class="stay-type">Guest house · Shela</p><p>From <span class="stay-price" data-price-kes="4500">KSh 4,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-guest-house&guests=2">Book this stay</a></div>
                     </article>
                     <article class="stay-card" data-location="lamu old town" data-type="hotel" data-guests="3" data-price="6500">
                         <img src="images/Lamu_Fort_Museum's.jpg" alt="Lamu Old Town hotel">
-                        <div class="stay-card-content"><h4>Old Town Swahili Hotel</h4><p class="stay-type">Hotel · Lamu Old Town</p><p>From <span class="stay-price">KSh 6,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=old-town-hotel&guests=3">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Old Town Swahili Hotel</h4><p class="stay-type">Hotel · Lamu Old Town</p><p>From <span class="stay-price" data-price-kes="6500">KSh 6,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=old-town-hotel&guests=3">Book this stay</a></div>
                     </article>
                     <article class="stay-card" data-location="manda lamu" data-type="home" data-guests="5" data-price="10000">
                         <img src="images/Lamu_coast.jpg" alt="Manda Island holiday home">
-                        <div class="stay-card-content"><h4>Manda Island Beach Home</h4><p class="stay-type">Entire home · Manda</p><p>From <span class="stay-price">KSh 10,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-beach-home&guests=5">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Manda Island Beach Home</h4><p class="stay-type">Entire home · Manda</p><p>From <span class="stay-price" data-price-kes="10000">KSh 10,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-beach-home&guests=5">Book this stay</a></div>
                     </article>
                     <article class="stay-card" data-location="lamu shela" data-type="villa" data-guests="4" data-price="12500">
                         <img src="pictures/187747945.jpg" alt="Shela private villa">
-                        <div class="stay-card-content"><h4>Shela Palm Villa</h4><p class="stay-type">Villa · Shela</p><p>From <span class="stay-price">KSh 12,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-palm-villa&guests=4">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Shela Palm Villa</h4><p class="stay-type">Villa · Shela</p><p>From <span class="stay-price" data-price-kes="12500">KSh 12,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=shela-palm-villa&guests=4">Book this stay</a></div>
                     </article>
                     <article class="stay-card" data-location="lamu mjini" data-type="hotel" data-guests="2" data-price="5500">
                         <img src="pictures/292079957.jpg" alt="Lamu Mjini hotel room">
-                        <div class="stay-card-content"><h4>Lamu Mjini Budget Hotel</h4><p class="stay-type">Hotel · Lamu Mjini</p><p>From <span class="stay-price">KSh 5,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=mjini-budget-hotel&guests=2">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Lamu Mjini Budget Hotel</h4><p class="stay-type">Hotel · Lamu Mjini</p><p>From <span class="stay-price" data-price-kes="5500">KSh 5,500</span> / night</p><a class="stay-card-link" href="booking.html?stay=mjini-budget-hotel&guests=2">Book this stay</a></div>
                     </article>
                     <article class="stay-card" data-location="lamu kipungani" data-type="guest house" data-guests="3" data-price="5000">
                         <img src="pictures/426298493.jpg" alt="Kipungani guest house">
-                        <div class="stay-card-content"><h4>Kipungani Coast Guest House</h4><p class="stay-type">Guest house · Kipungani</p><p>From <span class="stay-price">KSh 5,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=kipungani-guest-house&guests=3">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Kipungani Coast Guest House</h4><p class="stay-type">Guest house · Kipungani</p><p>From <span class="stay-price" data-price-kes="5000">KSh 5,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=kipungani-guest-house&guests=3">Book this stay</a></div>
                     </article>
                     <article class="stay-card" data-location="lamu manda" data-type="villa" data-guests="6" data-price="16000">
                         <img src="pictures/552000169.jpg" alt="Manda Island villa">
-                        <div class="stay-card-content"><h4>Manda Ocean Villa</h4><p class="stay-type">Villa · Manda</p><p>From <span class="stay-price">KSh 16,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-ocean-villa&guests=6">Book this stay</a></div>
+                        <div class="stay-card-content"><h4>Manda Ocean Villa</h4><p class="stay-type">Villa · Manda</p><p>From <span class="stay-price" data-price-kes="16000">KSh 16,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-ocean-villa&guests=6">Book this stay</a></div>
                     </article>
                 </div>
                 <p class="no-results" id="stay-no-results" hidden>No stays match those details. Try Lamu, Shela or Manda.</p>
@@ -441,6 +444,7 @@
             price.textContent = 'From ';
             const priceValue = document.createElement('span');
             priceValue.className = 'stay-price';
+            priceValue.dataset.priceKes = property.price_per_night;
             priceValue.textContent = `KSh ${Number(property.price_per_night).toLocaleString()}`;
             price.appendChild(priceValue);
             price.appendChild(document.createTextNode(' / night'));

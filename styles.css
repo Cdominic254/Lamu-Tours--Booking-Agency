@@ -74,6 +74,24 @@ nav .site-brand {
 nav a:hover { transform: translateY(-2px); }
 nav .account-link { border-color: rgba(20, 33, 61, .15); }
 
+.language-toggle {
+    min-width: 5.5rem;
+    margin-left: .25rem !important;
+    padding: .55rem .8rem;
+    border: 1px solid rgba(255, 255, 255, .65);
+    border-radius: 999px;
+    color: #fff;
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.language-toggle:hover, .language-toggle:focus-visible {
+    color: var(--ink);
+    background: var(--coral-light);
+}
+
 .container, main {
     border: 1px solid rgba(255, 255, 255, .8);
     box-shadow: var(--shadow) !important;
@@ -160,6 +178,7 @@ img { image-rendering: auto; }
     header::after { right: -8rem; }
     nav { position: relative; }
     nav .account-link { margin-left: 0 !important; }
+    nav .language-toggle { margin-left: 0 !important; }
     h1 { line-height: 1.15; }
 }
 

@@ -148,6 +148,8 @@
     </style>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <script src="localization.js" defer></script>
+    <script src="currency.js" defer></script>
     <script src="animations.js" defer></script>
 </head>
 <body>
@@ -164,6 +166,7 @@
         <a href="contact.html">Contact</a>
         <a href="hospitality.html">Hospitality</a>
         <a class="account-link" href="login.html">Sign in / Register</a>
+        <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Kiswahili">Kiswahili</button>
     </nav>
     <div class="container">
         <section class="owner-panel" id="list-property">
@@ -325,7 +328,13 @@
                         details.textContent = `${property.property_type} · ${property.location}`;
                         card.appendChild(details);
                         const price = document.createElement('p');
-                        price.textContent = `From KSh ${Number(property.price_per_night).toLocaleString()} per night · Up to ${property.guests} guests`;
+                        price.appendChild(document.createTextNode('From '));
+                        const priceValue = document.createElement('span');
+                        priceValue.dataset.priceKes = property.price_per_night;
+                        priceValue.dataset.priceUnitEn = 'per night';
+                        priceValue.dataset.priceUnitSw = 'kwa usiku';
+                        price.appendChild(priceValue);
+                        price.appendChild(document.createTextNode(` · Up to ${property.guests} guests`));
                         card.appendChild(price);
                         const description = document.createElement('p');
                         description.textContent = property.description;
