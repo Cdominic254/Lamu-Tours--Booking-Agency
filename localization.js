@@ -6,7 +6,6 @@
         'Booking': 'Uhifadhi',
         'About Lamu': 'Kuhusu Lamu',
         'Contact': 'Wasiliana Nasi',
-        'Hospitality': 'Malazi',
         'Sign in / Register': 'Ingia / Jisajili',
         'Switch to Kiswahili': 'Badilisha hadi Kiswahili',
         'Switch to English': 'Badilisha hadi Kiingereza',
@@ -280,7 +279,6 @@
         'Image URL (optional)': 'Kiungo cha picha (si lazima)',
         'Describe your property': 'Eleza kuhusu makazi yako',
         'Submit property for listing': 'Wasilisha makazi yaorodheshwe',
-        'Available Hospitality Partners': 'Washirika wa Malazi Wanaopatikana',
         'Comfortable, locally-owned guest houses with authentic Swahili hospitality.': 'Nyumba za wageni zinazomilikiwa na wenyeji, zenye starehe na ukarimu halisi wa Kiswahili.',
         'Stylish boutique hotels offering high-end comfort and personalized service.': 'Hoteli za kisasa zinazotoa starehe ya hali ya juu na huduma maalum.',
         'Private beach villas with ocean views, ideal for groups and luxury stays.': 'Vila za faragha ufukweni zenye mandhari ya bahari, bora kwa makundi na malazi ya kifahari.',
@@ -472,6 +470,8 @@
             detail: { language: currentLanguage },
         }));
     }
+
+    window.setLamuLanguage = setLanguage;
 
     let preferredLanguage = 'en';
     try {

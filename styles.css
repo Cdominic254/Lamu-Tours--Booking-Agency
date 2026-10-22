@@ -92,6 +92,21 @@ nav .account-link { border-color: rgba(20, 33, 61, .15); }
     background: var(--coral-light);
 }
 
+.catalogue-reviews {
+    margin-top: .8rem;
+    padding: .75rem;
+    border: 1px solid var(--line);
+    border-radius: .6rem;
+    background: #fff;
+}
+
+.catalogue-reviews summary { color: var(--blue); font-weight: 700; cursor: pointer; }
+.catalogue-review-form { display: grid; gap: .6rem; margin-top: .75rem; }
+.catalogue-review-form input, .catalogue-review-form select, .catalogue-review-form textarea { width: 100%; padding: .6rem; border: 1px solid var(--line); border-radius: .4rem; font: inherit; }
+.catalogue-review-form button { justify-self: start; padding: .6rem .9rem; border: 0; border-radius: .4rem; color: #fff; background: var(--blue); cursor: pointer; }
+.review-card { margin-top: .5rem; padding: .65rem; border-left: 3px solid var(--coral); background: var(--mist); }
+.review-card p { margin: .35rem 0 0; }
+
 .container, main {
     border: 1px solid rgba(255, 255, 255, .8);
     box-shadow: var(--shadow) !important;

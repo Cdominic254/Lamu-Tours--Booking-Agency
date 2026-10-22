@@ -1,9 +1,20 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "builds": [
     {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
       "src": "api/index.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": "{frontend/dist/**,images/**,pictures/**,templates/**,*.html,*.css,*.js,*.svg}"
+      }
     }
   ],
   "routes": [

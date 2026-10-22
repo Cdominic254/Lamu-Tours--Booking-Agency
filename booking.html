@@ -153,7 +153,6 @@
         <a href="booking.html">Booking</a>
         <a href="about-lamu.html">About Lamu</a>
         <a href="contact.html">Contact</a>
-        <a href="hospitality.html">Hospitality</a>
         <a class="account-link" href="login.html">Sign in / Register</a>
         <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Kiswahili">Kiswahili</button>
     </nav>
@@ -183,22 +182,8 @@
             </div>
 
             <label for="tour">Select Tour or Stay:</label>
-            <select id="tour" name="tour" required>
+            <select id="tour" name="tour" data-catalogue-booking-select required>
                 <option value="">Choose a tour or stay</option>
-                <option value="dhow">Dhow Trips</option>
-                <option value="old-town">Old Town Walks</option>
-                <option value="sandbank">Sandbank Picnics</option>
-                <option value="fishing">Fishing Trips</option>
-                <option value="water-sports">Water Sports</option>
-                <option value="day-trips">Day Trips</option>
-                <option value="cultural">Cultural Tours</option>
-                <option value="shela-guest-house" data-price-kes="4500" data-label-en="Shela Village Guest House" data-label-sw="Nyumba ya Wageni ya Shela Village" data-unit-en="per night" data-unit-sw="kwa usiku">Shela Village Guest House - KSh 4,500/night</option>
-                <option value="old-town-hotel" data-price-kes="6500" data-label-en="Old Town Swahili Hotel" data-label-sw="Hoteli ya Kiswahili ya Mji Mkongwe" data-unit-en="per night" data-unit-sw="kwa usiku">Old Town Swahili Hotel - KSh 6,500/night</option>
-                <option value="manda-beach-home" data-price-kes="10000" data-label-en="Manda Island Beach Home" data-label-sw="Nyumba ya Ufukweni ya Kisiwa cha Manda" data-unit-en="per night" data-unit-sw="kwa usiku">Manda Island Beach Home - KSh 10,000/night</option>
-                <option value="shela-palm-villa" data-price-kes="12500" data-label-en="Shela Palm Villa" data-label-sw="Vila ya Shela Palm" data-unit-en="per night" data-unit-sw="kwa usiku">Shela Palm Villa - KSh 12,500/night</option>
-                <option value="mjini-budget-hotel" data-price-kes="5500" data-label-en="Lamu Mjini Budget Hotel" data-label-sw="Hoteli Nafuu ya Lamu Mjini" data-unit-en="per night" data-unit-sw="kwa usiku">Lamu Mjini Budget Hotel - KSh 5,500/night</option>
-                <option value="kipungani-guest-house" data-price-kes="5000" data-label-en="Kipungani Coast Guest House" data-label-sw="Nyumba ya Wageni ya Pwani ya Kipungani" data-unit-en="per night" data-unit-sw="kwa usiku">Kipungani Coast Guest House - KSh 5,000/night</option>
-                <option value="manda-ocean-villa" data-price-kes="16000" data-label-en="Manda Ocean Villa" data-label-sw="Vila ya Bahari ya Manda" data-unit-en="per night" data-unit-sw="kwa usiku">Manda Ocean Villa - KSh 16,000/night</option>
             </select>
 
             <label for="date">Preferred Date:</label>
@@ -219,24 +204,8 @@
         </form>
     </div>
     <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p><div class="footer-partners" aria-label="Partners"><span class="footer-partner">Booking.com</span><span class="footer-partner">Kenya Tourism Board</span><span class="footer-partner">Ministry of Wildlife and Tourism</span></div></footer>
+    <script src="catalogue.js" defer></script>
     <script>
-        const tourPrices = {
-            dhow: 8500,
-            'old-town': 3500,
-            sandbank: 7000,
-            fishing: 12000,
-            'water-sports': 9500,
-            'day-trips': 9000,
-            cultural: 4000,
-            'shela-guest-house': 4500,
-            'old-town-hotel': 6500,
-            'manda-beach-home': 10000,
-            'shela-palm-villa': 12500,
-            'mjini-budget-hotel': 5500,
-            'kipungani-guest-house': 5000,
-            'manda-ocean-villa': 16000
-        };
-
         function calculateTotal() {
             const tourSelect = document.getElementById('tour');
             const guestsInput = document.getElementById('guests');
@@ -244,7 +213,8 @@
 
             const selectedTour = tourSelect.value;
             const guests = parseInt(guestsInput.value) || 0;
-            totalDiv.dataset.priceKes = selectedTour && guests > 0 ? tourPrices[selectedTour] * guests : 0;
+            const unitPrice = Number(tourSelect.selectedOptions[0]?.dataset.priceKes || 0);
+            totalDiv.dataset.priceKes = selectedTour && guests > 0 ? unitPrice * guests : 0;
 
             const amount = totalDiv.dataset.priceKes;
             const totalLabel = document.documentElement.lang === 'sw' ? 'Jumla ya Bei: ' : 'Total Price: ';

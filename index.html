@@ -251,7 +251,6 @@
         <a href="booking.html">Booking</a>
         <a href="about-lamu.html">About Lamu</a>
         <a href="contact.html">Contact</a>
-        <a href="hospitality.html">Hospitality</a>
         <a class="account-link" href="login.html">Sign in / Register</a>
         <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Kiswahili">Kiswahili</button>
     </nav>
@@ -357,6 +356,7 @@
                         <div class="stay-card-content"><h4>Manda Ocean Villa</h4><p class="stay-type">Villa · Manda</p><p>From <span class="stay-price" data-price-kes="16000">KSh 16,000</span> / night</p><a class="stay-card-link" href="booking.html?stay=manda-ocean-villa&guests=6">Book this stay</a></div>
                     </article>
                 </div>
+                <p data-catalogue-status role="status"></p>
                 <p class="no-results" id="stay-no-results" hidden>No stays match those details. Try Lamu, Shela or Manda.</p>
             </div>
         </section>
@@ -371,14 +371,19 @@
         <p>Discover the beauty of Lamu with our expert-guided tours and seamless booking services. Explore historical sites, pristine beaches, and cultural experiences.</p>
     </div>
     <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p><div class="footer-partners" aria-label="Partners"><span class="footer-partner">Booking.com</span><span class="footer-partner">Kenya Tourism Board</span><span class="footer-partner">Ministry of Wildlife and Tourism</span></div></footer>
+    <script src="catalogue.js" defer></script>
     <script>
         const stayForm = document.getElementById('stay-search-form');
-        let stayCards = [...document.querySelectorAll('.stay-card')];
+        let stayCards = [];
         const resultCount = document.getElementById('stay-result-count');
         const noResults = document.getElementById('stay-no-results');
         const checkIn = document.getElementById('stay-check-in');
         const checkOut = document.getElementById('stay-check-out');
         const dateError = document.getElementById('date-error');
+        window.addEventListener('lamu-properties-loaded', () => {
+            stayCards = [...document.querySelectorAll('.stay-card')];
+            resultCount.textContent = `${stayCards.length} places found`;
+        });
 
         const today = new Date();
         const todayValue = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -394,80 +399,6 @@
         checkOut.addEventListener('change', () => {
             dateError.classList.toggle('visible', Boolean(checkIn.value && checkOut.value && checkOut.value <= checkIn.value));
         });
-
-        document.querySelectorAll('.destination-card[data-images]').forEach((card) => {
-            const image = card.querySelector('img');
-            const images = card.dataset.images.split(',');
-            let imageIndex = 0;
-            let paused = false;
-
-            const rotateImage = () => {
-                if (paused) return;
-                image.classList.add('is-changing');
-                window.setTimeout(() => {
-                    imageIndex = (imageIndex + 1) % images.length;
-                    image.src = images[imageIndex];
-                    image.classList.remove('is-changing');
-                }, 450);
-            };
-
-            window.setInterval(rotateImage, 3500);
-            card.addEventListener('mouseenter', () => { paused = true; });
-            card.addEventListener('mouseleave', () => { paused = false; });
-        });
-
-        function addOwnerProperty(property) {
-            const card = document.createElement('article');
-            card.className = 'stay-card';
-            card.dataset.location = property.location.toLowerCase();
-            card.dataset.type = property.property_type.toLowerCase();
-            card.dataset.guests = property.guests;
-            card.dataset.price = property.price_per_night;
-
-            const image = document.createElement('img');
-            image.src = property.image_url && /^https?:\/\//i.test(property.image_url)
-                ? property.image_url
-                : 'pictures/view.jpg';
-            image.alt = property.name;
-            card.appendChild(image);
-
-            const content = document.createElement('div');
-            content.className = 'stay-card-content';
-            const title = document.createElement('h4');
-            title.textContent = property.name;
-            content.appendChild(title);
-            const type = document.createElement('p');
-            type.className = 'stay-type';
-            type.textContent = `${property.property_type} · ${property.location}`;
-            content.appendChild(type);
-            const price = document.createElement('p');
-            price.textContent = 'From ';
-            const priceValue = document.createElement('span');
-            priceValue.className = 'stay-price';
-            priceValue.dataset.priceKes = property.price_per_night;
-            priceValue.textContent = `KSh ${Number(property.price_per_night).toLocaleString()}`;
-            price.appendChild(priceValue);
-            price.appendChild(document.createTextNode(' / night'));
-            content.appendChild(price);
-            const link = document.createElement('a');
-            link.className = 'stay-card-link';
-            link.href = 'hospitality.html#owner-listings';
-            link.textContent = 'View property';
-            content.appendChild(link);
-            card.appendChild(content);
-            document.getElementById('stay-grid').appendChild(card);
-            stayCards.push(card);
-        }
-
-        fetch('/properties')
-            .then((response) => response.ok ? response.json() : Promise.reject(new Error('Properties unavailable')))
-            .then(({ properties }) => {
-                properties.forEach(addOwnerProperty);
-                resultCount.textContent = `${stayCards.length} places found`;
-            })
-            .catch(() => {
-                resultCount.textContent = `${stayCards.length} places found`;
-            });
 
         stayForm.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -491,12 +422,6 @@
             document.getElementById('stay-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
 
-        document.querySelectorAll('[data-destination]').forEach((link) => {
-            link.addEventListener('click', () => {
-                document.getElementById('stay-destination').value = link.dataset.destination;
-                stayForm.requestSubmit();
-            });
-        });
     </script>
 </body>
 </html>

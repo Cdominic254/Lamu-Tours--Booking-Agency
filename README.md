@@ -2,12 +2,35 @@
 
 Lamu Tours is a Flask-powered booking website for Lamu tours, accommodation, property listings, and traveler reviews.
 
+## Project structure
+
+```text
+api/index.py             Vercel Python Function entrypoint
+app.py                   Flask application and compatibility routes
+saas/                    Shared database extension and domain modules
+  modules/
+    identity/            Customer, vendor, and admin models
+    catalog/             Tours, properties, schedules, and reviews
+    bookings/            Booking models, settings, and services
+    messaging/            Contact and messaging models
+frontend/                React, Vite, and Tailwind application
+images/  pictures/       Committed listing and Lamu photography
+templates/               Server-rendered fallback/admin templates
+tests/                   Backend and deployment configuration tests
+```
+
+Keep `app.py`, `api/index.py`, and `requirements.txt` at the repository root: Vercel's Python builder uses the root dependency file, and `api/index.py` imports the Flask application. Existing package and static-asset folder names are deliberately retained because routes, catalogue records, and the frontend reference them.
+
+The backend is a modular monolith: one Flask deployment and database, with code grouped by business domain. The shared SQLAlchemy extension is in `saas/extensions.py`. `app.py` remains the compatibility layer for existing URLs while services move into `saas/modules/`.
+
 ## Local setup
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+npm --prefix frontend install
+npm --prefix frontend run build
 cp .env.example .env
 python app.py
 ```
@@ -15,6 +38,19 @@ python app.py
 Open `http://127.0.0.1:5000` in a browser.
 
 The `run.sh` script also starts the app and uses the local `venv` when it exists.
+
+### React frontend
+
+The visitor-facing website is built with React, Vite, and Tailwind CSS. Flask remains the backend for bookings, payments, accounts, the public catalogue, and admin pages.
+
+For frontend development, start Flask with `python app.py` and run the Vite development server in a second terminal:
+
+```bash
+npm --prefix frontend install
+npm --prefix frontend run dev
+```
+
+Open `http://127.0.0.1:5173`. Vite proxies API, form, and image requests to Flask on port 5000. To serve the production frontend through Flask locally, run `npm --prefix frontend run build` before starting the app. Vercel builds the frontend during deployment.
 
 ### Language selection
 
@@ -25,6 +61,27 @@ Visitor pages include a language button in the navigation to switch between Engl
 Visitor pages use the incoming public IP address to detect a visitor's country and automatically display prices in the country's currency. Currency is converted from KSh using daily rates from [ExchangeRate-API](https://www.exchangerate-api.com/), while geolocation is provided by [ipapi](https://ipapi.co/). The server caches currency data for 12 hours. These services receive the visitor IP for geolocation; review their current privacy policies and terms before deployment.
 
 Converted prices are estimates for display only. Booking records and Stripe checkout continue to use KSh. If IP detection or rate lookup fails, the site falls back to KSh.
+
+### Catalog and admin accounts
+
+Tours, properties, trending destinations, role accounts, platform operations, and analytics are managed from `/admin`; recent bookings and contact messages are available at `/dashboard`. Admin operations include customer/vendor access suspension, booking oversight, dispute case notes/resolution, paid revenue reporting, and commission settings. Commission defaults to 15% and is limited to 10–20%; each new booking snapshots the current rate. The cancellation cutoff remains 48 hours. Paid refund requests require manual review and processing outside the application; the dashboard does not issue gateway refunds. Configure `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the app environment before the first start to bootstrap the initial admin account. The password is stored as a hash; signed-in admins can add other admin accounts and manage the public catalog. Use a unique password of at least 12 characters for additional accounts.
+
+Reviews are associated with the tour or property they describe. Bookable tours and stays, and trending destinations, are loaded from the catalog.
+Public review submission is rate-limited and validates field lengths, rating, target, and email server-side.
+
+### Vendor accounts
+
+Vendors register at `/vendor/register` and sign in at `/vendor/login`; vendor access is separate from traveler and admin sign-in. The `/vendor/dashboard` portal allows each vendor to create, update, and remove only the tours and properties they own, publish dated departures with guest capacity, upload listing photos, manage itinerary and inclusions, and process bookings for their own tours. Admins can review vendor accounts and their listings in `/admin`, and remove vendor accounts when needed. Configure `SECRET_KEY` with a persistent random value so secure registration and role sessions remain valid across app restarts.
+
+Vendor booking statuses follow `requested → confirmed → in preparation → completed`; a requested, confirmed, or in-preparation booking can instead be cancelled. Each transition is scoped to tours belonging to the signed-in vendor. Customer status emails are sent when SMTP is configured. A cancellation updates the booking and releases its reserved capacity; it does not automatically refund a captured payment.
+
+### Customer bookings and tour information
+
+Tours can be browsed by category. Admins and vendors can edit category, itinerary, inclusions/exclusions, pickup point, group-size limits, and tour photos. A tour must have future departures published in the dashboard before it can be booked. Departure capacity is reserved atomically when a request is submitted; a full departure is removed from public availability. Photo uploads accept JPEG, PNG, or WebP files up to 10 MB.
+
+Customers can book as guests or while signed in. Only bookings made while signed in are associated with a customer account and visible at `/my-bookings`. Signed-in customers can cancel or reschedule eligible bookings at least 48 hours before departure. Changes are protected by account ownership and CSRF checks. Tour reviews remain available on the tour detail page.
+
+Tour bookings require secure Stripe Checkout in KES; bookings are not created when Stripe is unavailable. The browser return page is not treated as proof of payment: a verified Stripe webhook (or a server-side Checkout Session verification) confirms payment. An unpaid checkout keeps its departure capacity reserved until the Stripe expiration webhook arrives. Booking and status emails are sent when SMTP settings are configured. WhatsApp delivery is not enabled; the messaging service can be extended with a WhatsApp provider when credentials and provider preferences are available.
 
 ## Hosting
 
@@ -38,30 +95,46 @@ Configure these environment variables on the hosting provider:
 
 - `SECRET_KEY`: long random value used to sign sessions
 - `DATABASE_URL`: managed PostgreSQL URL for production persistence, or SQLite for temporary/single-instance hosting
+- `SITE_URL=https://lamutours.co.ke`: canonical public site URL used for Stripe return links; use `http://127.0.0.1:5000` for local checkout tests
 - `SESSION_COOKIE_SECURE=true` when the site is served over HTTPS
+- `RATELIMIT_STORAGE_URI`: shared Redis URL for production rate-limit state (`memory://` is only for local development and the app refuses to start in production with it)
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_FROM`, and `EMAIL_TO` for contact notifications
 - `STRIPE_SECRET_KEY`: Stripe live or test secret key for checkout sessions
 - `STRIPE_WEBHOOK_SECRET`: Stripe signing secret for `/stripe-webhook`
+- Keep both Stripe values in the hosting provider's secret environment settings; never commit live keys or send them in chat.
+- `ADMIN_EMAIL` and `ADMIN_PASSWORD`: bootstrap the first admin account when the database has no admins
 
 Install dependencies with `pip install -r requirements.txt`. The service should run the `Procfile` command and expose the provider's `PORT` value.
 
 Before going live, register the webhook endpoint in Stripe Dashboard:
 
-- Endpoint URL: `https://your-domain.com/stripe-webhook`
-- Events: `checkout.session.completed`
+- Endpoint URL: `https://lamutours.co.ke/stripe-webhook`
+- Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.expired`.
 - Use the generated `STRIPE_WEBHOOK_SECRET` value from the Stripe dashboard.
+- For local webhook testing, run `stripe listen --forward-to localhost:5000/stripe-webhook` and set the printed signing secret as `STRIPE_WEBHOOK_SECRET`.
+- Start with Stripe test-mode keys and verify a successful checkout, a cancelled checkout, and an expired checkout before enabling live mode. Confirm that the Stripe account can accept KES before launch.
 
 SQLite is suitable for local development, but many hosted platforms use ephemeral filesystems. Use managed PostgreSQL in production so bookings, users, properties, and reviews survive redeployments.
 
 ## Deploy to Vercel
 
-The project includes `vercel.json` and `api/index.py` for Vercel's Python runtime.
+The project includes `vercel.json` and `api/index.py` for Vercel's Python runtime. The Vercel config builds the React app from `frontend/package.json`, routes requests through Flask, and packages the built frontend, local image directories, and fallback templates with the Python function. `.vercelignore` omits local environments, secrets, databases, test files, and temporary uploads.
 
 1. Import this repository in the Vercel dashboard, or run `vercel` from the project directory.
-2. Set the project environment variables from the hosting section above. In particular, configure `DATABASE_URL` with a hosted PostgreSQL connection string and set a persistent `SECRET_KEY`.
-3. Deploy with `vercel --prod`.
+2. Add `lamutours.co.ke` to the Vercel project's **Settings → Domains** and follow Vercel's DNS instructions at your domain registrar. Set the apex domain as the primary domain; add `www.lamutours.co.ke` too if you want Vercel to redirect it.
+3. Set the project environment variables from the hosting section above, including `SITE_URL=https://lamutours.co.ke`, a Redis-backed `RATELIMIT_STORAGE_URI`, and `SESSION_COOKIE_SECURE=true`. The app refuses to start in production if the shared rate-limit store or persistent `SECRET_KEY` is missing. Configure `DATABASE_URL` with a hosted PostgreSQL connection string. Use a Redis-compatible managed store and keep its URL private.
+4. Deploy with `vercel --prod`, then confirm HTTPS works at `https://lamutours.co.ke` and set the Stripe webhook URL to `https://lamutours.co.ke/stripe-webhook`.
 
-The deployed site will serve the Flask application at the Vercel URL. Do not open the HTML files directly when testing bookings; use the deployed URL so the form can reach the Flask booking endpoint.
+Vercel must verify the domain through the DNS records it provides before the custom domain serves the deployment. Do not open the HTML files directly when testing bookings; use the deployed URL so the form can reach the Flask booking endpoint.
+
+**Before launch:** configure external object storage for admin/vendor image uploads. Vercel Function filesystems are not durable, so uploads are deliberately rejected on Vercel until persistent storage is integrated. Existing committed files under `images/` and `pictures/` are bundled and served normally. Use image URLs or current static assets until uploads have a persistent storage provider.
+
+For other hosting providers, build the React frontend before starting the Flask `Procfile` command:
+
+```bash
+npm --prefix frontend ci
+npm --prefix frontend run build
+```
 
 ### Host the database with Neon
 

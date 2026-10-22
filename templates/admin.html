@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="admin-csrf" content="{{ csrf_token }}">
+    <title>Catalog management | Lamu Tours</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        body { margin: 0; }
+        header { padding: 1.5rem; color: white; }
+        main { width: min(100% - 2rem, 1200px); margin: 2rem auto; }
+        .admin-nav, .admin-section, .admin-card { padding: 1rem; margin: 1rem 0; background: white; border-radius: .75rem; box-shadow: var(--shadow); }
+        .admin-nav { display: flex; justify-content: space-between; align-items: center; }
+        .admin-nav a, .admin-nav button { margin: .25rem; }
+        .admin-sections { display: grid; gap: 1rem; }
+        .admin-section h2 { margin-top: 0; }
+        .admin-form, .record-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .8rem; }
+        .admin-form label, .record-form label { display: grid; gap: .35rem; font-weight: 600; }
+        .admin-form .wide, .record-form .wide { grid-column: 1 / -1; }
+        input, textarea, select, button { padding: .7rem; font: inherit; }
+        textarea { min-height: 5rem; }
+        button { border: 0; border-radius: .4rem; color: white; background: var(--blue); cursor: pointer; }
+        button.danger { background: #a12622; }
+        .admin-records { display: grid; gap: .75rem; margin-top: 1rem; }
+        .admin-card h3 { margin-top: 0; }
+        .admin-message { min-height: 1.5rem; color: #216b3a; }
+        .admin-message.error { color: #a12622; }
+        @media (max-width: 600px) { .admin-nav { align-items: flex-start; flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <header><h1>Catalog management</h1><p>Manage tours, properties, trending destinations, and admin accounts.</p></header>
+    <main>
+        <nav class="admin-nav" aria-label="Admin navigation">
+            <div><a href="/">Public site</a> <a href="/dashboard">Bookings and messages</a></div>
+            <form action="/admin/logout" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Sign out</button></form>
+        </nav>
+        <p id="admin-message" class="admin-message" role="status" aria-live="polite"></p>
+        <div class="admin-sections">
+            <section class="admin-section">
+                <h2>Tours</h2>
+                <form id="new-tour" class="admin-form">
+                    <label>Name<input name="name" required></label>
+                    <label>Price (KSh per guest)<input name="price" type="number" min="1" required></label>
+                    <label>Duration<input name="duration" required></label>
+                    <label>Image URL or images/ path<input name="image_url"></label>
+                    <label class="wide">Description<textarea name="description" required></textarea></label>
+                    <button type="submit">Add tour</button>
+                </form>
+                <div id="tour-records" class="admin-records"></div>
+            </section>
+            <section class="admin-section">
+                <h2>Listed properties</h2>
+                <form id="new-property" class="admin-form">
+                    <label>Name<input name="name" required></label>
+                    <label>Type<select name="property_type" required><option value="hotel">Hotel</option><option value="home">Home</option><option value="guest house">Guest house</option><option value="villa">Villa</option></select></label>
+                    <label>Location<input name="location" required></label>
+                    <label>Price per night (KSh)<input name="price_per_night" type="number" min="1" required></label>
+                    <label>Guest capacity<input name="guests" type="number" min="1" required></label>
+                    <label>Image URL or images/ path<input name="image_url"></label>
+                    <label class="wide">Description<textarea name="description" required></textarea></label>
+                    <button type="submit">Add property</button>
+                </form>
+                <div id="property-records" class="admin-records"></div>
+            </section>
+            <section class="admin-section">
+                <h2>Trending destinations</h2>
+                <form id="new-destination" class="admin-form">
+                    <label>Name<input name="name" required></label>
+                    <label>Search location<input name="search_location" required></label>
+                    <label>Image URL or pictures/ path<input name="image_url"></label>
+                    <label class="wide">Description<textarea name="description" required></textarea></label>
+                    <button type="submit">Add destination</button>
+                </form>
+                <div id="destination-records" class="admin-records"></div>
+            </section>
+            <section class="admin-section">
+                <h2>Admin accounts</h2>
+                <form id="new-admin" class="admin-form">
+                    <label>Name<input name="name" required></label>
+                    <label>Email<input name="email" type="email" required></label>
+                    <label>Password (at least 12 characters)<input name="password" type="password" minlength="12" required></label>
+                    <button type="submit">Create admin account</button>
+                </form>
+                <div id="admin-records" class="admin-records"></div>
+            </section>
+        </div>
+    </main>
+    <script src="/admin.js" defer></script>
+</body>
+</html>
