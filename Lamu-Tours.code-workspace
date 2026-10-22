@@ -1,0 +1,74 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "Lamu Tours & Booking Agency"
+    },
+    {
+      "path": "backend",
+      "name": "Backend"
+    },
+    {
+      "path": "frontend",
+      "name": "Frontend"
+    }
+  ],
+  "settings": {
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.python",
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.python",
+      "editor.formatOnSave": true
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/node_modules": true,
+      "**/.git": true
+    },
+    "search.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/node_modules": true,
+      "**/.venv": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "ms-vscode.makefile-tools",
+      "github.copilot"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Python: Django",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder:Backend}/manage.py",
+        "console": "integratedTerminal",
+        "args": [
+          "runserver"
+        ],
+        "django": true,
+        "jinja": true,
+        "justMyCode": true
+      }
+    ]
+  }
+}
