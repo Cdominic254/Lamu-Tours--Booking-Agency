@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin sign in | Lamu Tours</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        body { margin: 0; padding: 2rem 1rem; }
+        main { max-width: 32rem; margin: 4rem auto; padding: 2rem; background: white; border-radius: 1rem; box-shadow: var(--shadow); }
+        form { display: grid; gap: 1rem; }
+        label { display: grid; gap: .35rem; font-weight: 600; }
+        input, button { padding: .8rem; font: inherit; }
+        button { border: 0; border-radius: .4rem; color: white; background: var(--blue); cursor: pointer; }
+        .error { color: #a12622; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Admin sign in</h1>
+        {% if setup_required %}
+        <p>No admin accounts have been created. Configure <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code> in the app environment, then restart to create the first admin account.</p>
+        {% endif %}
+        {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+        <form method="post" action="/admin/login">
+            <label for="email">Admin email<input id="email" name="email" type="email" autocomplete="username" required></label>
+            <label for="password">Password<input id="password" name="password" type="password" autocomplete="current-password" required></label>
+            <button type="submit">Sign in</button>
+        </form>
+        <p><a href="/">Return to Lamu Tours</a></p>
+    </main>
+</body>
+</html>

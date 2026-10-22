@@ -5,4 +5,11 @@ __pycache__
 *.py[cod]
 *.db
 .env
+.env.*
+!.env.example
 .vscode
+frontend/node_modules
+uploads
+tests
+.pytest_cache
+instance

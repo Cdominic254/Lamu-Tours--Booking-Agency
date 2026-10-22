@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+:root {
+  font-family: "DM Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #18344b;
+  background: #f2f8fc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  line-height: 1.55;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #f06f52;
+  outline-offset: 3px;
+}
+
+.display-font {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+.brand-lockup {
+  position: relative;
+  z-index: 1;
+  text-decoration: none;
+}
+
+.brand-mark {
+  flex: none;
+  border: 3px solid white;
+  border-radius: 1.15rem;
+  background: #14213d;
+  box-shadow: 0 5px 14px rgb(8 56 93 / 22%), 0 0 0 1px rgb(8 56 93 / 10%);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.brand-lockup:hover .brand-mark {
+  transform: translateY(-2px) rotate(-2deg);
+  box-shadow: 0 8px 18px rgb(8 56 93 / 25%), 0 0 0 1px rgb(8 56 93 / 10%);
+}
+
+.brand-name {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.brand-tagline {
+  margin-top: 0.28rem;
+  line-height: 1.2;
+}
+
+.image-overlay {
+  background:
+    linear-gradient(90deg, rgb(4 35 70 / 82%) 0%, rgb(4 68 112 / 52%) 52%, rgb(4 126 153 / 10%) 100%),
+    linear-gradient(0deg, rgb(3 37 69 / 28%), transparent 55%);
+}
+
+.field {
+  width: 100%;
+  border: 1px solid #cbdde9;
+  border-radius: 0.65rem;
+  background: white;
+  padding: 0.78rem 0.9rem;
+  color: #18344b;
+}
+
+.field:focus {
+  border-color: #078aa8;
+  outline: 3px solid rgb(7 138 168 / 16%);
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #31536a;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.field::placeholder {
+  color: #7d94a5;
+}
+
+.coast-hero::after {
+  position: absolute;
+  z-index: -1;
+  inset: auto -8rem -15rem auto;
+  width: 34rem;
+  height: 34rem;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 36px rgb(255 255 255 / 5%), 0 0 0 72px rgb(255 255 255 / 4%);
+  content: "";
+  pointer-events: none;
+}
+
+.feature-card {
+  position: relative;
+  overflow: hidden;
+  border-top-width: 4px;
+  box-shadow: 0 10px 28px rgb(15 61 96 / 6%);
+}
+
+.feature-card-01 {
+  border-top-color: #0e9db0;
+}
+
+.feature-card-02 {
+  border-top-color: #f06f52;
+}
+
+.feature-card-03 {
+  border-top-color: #e3b548;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+}
+
+.coast-gallery-wrap {
+  background: linear-gradient(180deg, #f2f8fc 0%, #e8f5fb 100%);
+}
+
+.coast-gallery-card {
+  min-height: 14rem;
+  box-shadow: 0 12px 28px rgb(8 56 93 / 12%);
+}
+
+.portal-header {
+  background-image: linear-gradient(112deg, #083b66 0%, #087e9f 72%, #0a9dac 100%);
+  box-shadow: 0 8px 24px rgb(8 56 93 / 15%);
+}
+
+.portal-header::after {
+  position: absolute;
+}
+
+.portal-header > div {
+  position: relative;
+}
+
+.portal-header > div::after {
+  position: absolute;
+  top: -4rem;
+  right: 18%;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid rgb(255 255 255 / 17%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 22px rgb(255 255 255 / 5%);
+  content: "";
+  pointer-events: none;
+}
+
+.portal-header > div > * {
+  z-index: 1;
+}
+
+/* Keep existing Tailwind color utilities visually consistent with the coastal theme. */
+[class~="bg-[#f8f7f2]"] {
+  background-color: #f2f8fc;
+}
+
+[class~="bg-[#fbfaf6]"] {
+  background-color: #fbfdff;
+}
+
+[class~="bg-[#efeee7]"],
+[class~="bg-[#f5f3ed]"],
+[class~="bg-[#eeeee6]"],
+[class~="bg-[#e8eee9]"] {
+  background-color: #eaf5fb;
+}
+
+[class~="bg-[#203b35]"] {
+  background-color: #083b66;
+}
+
+[class~="bg-[#31554b]"] {
+  background-color: #0b6488;
+}
+
+[class~="bg-[#b96e45]"] {
+  background-color: #ed6f52;
+}
+
+[class~="bg-[#a45d38]"] {
+  background-color: #d9583f;
+}
+
+[class~="text-[#203b35]"] {
+  color: #0a4772;
+}
+
+[class~="text-[#52615b]"] {
+  color: #466276;
+}
+
+[class~="text-[#66736d]"] {
+  color: #526b7c;
+}
+
+[class~="text-[#7a857f]"] {
+  color: #718798;
+}
+
+[class~="text-[#b96e45]"],
+[class~="text-[#a75f3a]"],
+[class~="text-[#9a5534]"] {
+  color: #d9583f;
+}
+
+[class~="text-[#f1b28b]"] {
+  color: #7ee2e1;
+}
+
+[class~="border-[#e9e5db]"],
+[class~="border-[#dedbd2]"],
+[class~="border-[#d9d7cd]"],
+[class~="border-[#d9ded8]"],
+[class~="border-[#efede7]"] {
+  border-color: #d5e5ef;
+}
+
+[class~="hover:bg-[#203b35]"]:hover {
+  background-color: #083b66;
+}
+
+[class~="hover:bg-[#31554b]"]:hover {
+  background-color: #0b6488;
+}
+
+[class~="hover:bg-[#a45d38]"]:hover {
+  background-color: #d9583f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
