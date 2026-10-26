@@ -157,7 +157,7 @@
         <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Kiswahili">Kiswahili</button>
     </nav>
     <div class="container">
-        <h2>Book Your Tour or Stay</h2>
+        <h2>Book Your Tour or Stay with M-Pesa</h2>
         <p id="booking-error" class="booking-error" role="alert"></p>
         <form id="booking-form" action="/booking-confirmation" method="post">
             <label for="name">Full Name:</label>
@@ -170,15 +170,8 @@
             <div class="phone-fields">
                 <select id="country-code" name="country_code" aria-label="Country code" required>
                     <option value="+254" selected>Kenya (+254)</option>
-                    <option value="+1">United States/Canada (+1)</option>
-                    <option value="+44">United Kingdom (+44)</option>
-                    <option value="+255">Tanzania (+255)</option>
-                    <option value="+256">Uganda (+256)</option>
-                    <option value="+27">South Africa (+27)</option>
-                    <option value="+91">India (+91)</option>
-                    <option value="+971">United Arab Emirates (+971)</option>
                 </select>
-                <input type="tel" id="phone" name="phone" inputmode="numeric" pattern="[0-9]+" title="Enter numbers only, without the country code" placeholder="704143718" required>
+                <input type="tel" id="phone" name="phone" inputmode="numeric" pattern="(?:0?[17][0-9]{8}|254[17][0-9]{8})" title="Enter a Kenyan mobile number, with or without the leading 0 or 254" placeholder="0712345678" required>
             </div>
 
             <label for="tour">Select Tour or Stay:</label>
@@ -200,7 +193,7 @@
             <label for="message">Special Requests:</label>
             <textarea id="message" name="message" rows="4"></textarea>
 
-            <button type="submit">Submit Booking Request</button>
+            <button type="submit">Request M-Pesa Payment</button>
         </form>
     </div>
     <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p><div class="footer-partners" aria-label="Partners"><span class="footer-partner">Booking.com</span><span class="footer-partner">Kenya Tourism Board</span><span class="footer-partner">Ministry of Wildlife and Tourism</span></div></footer>

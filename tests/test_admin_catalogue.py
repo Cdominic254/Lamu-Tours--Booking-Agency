@@ -639,10 +639,10 @@ def test_vendor_can_view_and_advance_only_their_tour_bookings(monkeypatch, vendo
         json={'status': 'cancelled'},
         headers=first_headers,
     )
-    assert cancelled_response.status_code == 200
-    assert cancelled_response.get_json()['booking']['status'] == 'cancelled'
+    assert cancelled_response.status_code == 409
+    assert 'M-Pesa request' in cancelled_response.get_json()['error']
     with application.app.app_context():
-        assert application.db.session.get(application.TourSchedule, cancelled_schedule_id).booked_count == 0
+        assert application.db.session.get(application.TourSchedule, cancelled_schedule_id).booked_count == 1
 
 
 def test_vendor_image_upload_checks_role_csrf_and_image_signature(tmp_path, monkeypatch, vendor_pair):

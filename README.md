@@ -17,6 +17,8 @@ frontend/                React, Vite, and Tailwind application
 images/  pictures/       Committed listing and Lamu photography
 templates/               Server-rendered fallback/admin templates
 tests/                   Backend and deployment configuration tests
+Dockerfile               Multi-stage Flask and frontend image build
+terraform/               Terraform for the local Kubernetes deployment
 ```
 
 Keep `app.py`, `api/index.py`, and `requirements.txt` at the repository root: Vercel's Python builder uses the root dependency file, and `api/index.py` imports the Flask application. Existing package and static-asset folder names are deliberately retained because routes, catalogue records, and the frontend reference them.
@@ -60,7 +62,7 @@ Visitor pages include a language button in the navigation to switch between Engl
 
 Visitor pages use the incoming public IP address to detect a visitor's country and automatically display prices in the country's currency. Currency is converted from KSh using daily rates from [ExchangeRate-API](https://www.exchangerate-api.com/), while geolocation is provided by [ipapi](https://ipapi.co/). The server caches currency data for 12 hours. These services receive the visitor IP for geolocation; review their current privacy policies and terms before deployment.
 
-Converted prices are estimates for display only. Booking records and Stripe checkout continue to use KSh. If IP detection or rate lookup fails, the site falls back to KSh.
+Converted prices are estimates for display only. Booking records and M-Pesa payments use KSh. If IP detection or rate lookup fails, the site falls back to KSh.
 
 ### Catalog and admin accounts
 
@@ -81,7 +83,7 @@ Tours can be browsed by category. Admins and vendors can edit category, itinerar
 
 Customers can book as guests or while signed in. Only bookings made while signed in are associated with a customer account and visible at `/my-bookings`. Signed-in customers can cancel or reschedule eligible bookings at least 48 hours before departure. Changes are protected by account ownership and CSRF checks. Tour reviews remain available on the tour detail page.
 
-Tour bookings require secure Stripe Checkout in KES; bookings are not created when Stripe is unavailable. The browser return page is not treated as proof of payment: a verified Stripe webhook (or a server-side Checkout Session verification) confirms payment. An unpaid checkout keeps its departure capacity reserved until the Stripe expiration webhook arrives. Booking and status emails are sent when SMTP settings are configured. WhatsApp delivery is not enabled; the messaging service can be extended with a WhatsApp provider when credentials and provider preferences are available.
+Tour bookings are paid in KES through Safaricom Daraja Lipa Na M-Pesa Online (STK Push). A booking remains pending until its callback is checked against Daraja's STK Query API; browser redirects are not used as proof of payment. The departure remains reserved while the customer completes the M-Pesa prompt, and failed payments release the reservation. Pending payments cannot be cancelled because Daraja does not provide a reliable way to withdraw an STK prompt after it has been sent. Booking and status emails are sent when SMTP is configured. WhatsApp delivery is not enabled; the messaging service can be extended with a WhatsApp provider when credentials and provider preferences are available.
 
 ## Hosting
 
@@ -95,24 +97,18 @@ Configure these environment variables on the hosting provider:
 
 - `SECRET_KEY`: long random value used to sign sessions
 - `DATABASE_URL`: managed PostgreSQL URL for production persistence, or SQLite for temporary/single-instance hosting
-- `SITE_URL=https://lamutours.co.ke`: canonical public site URL used for Stripe return links; use `http://127.0.0.1:5000` for local checkout tests
+- `SITE_URL=https://lamutours.co.ke`: canonical public site URL
 - `SESSION_COOKIE_SECURE=true` when the site is served over HTTPS
 - `RATELIMIT_STORAGE_URI`: shared Redis URL for production rate-limit state (`memory://` is only for local development and the app refuses to start in production with it)
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_FROM`, and `EMAIL_TO` for contact notifications
-- `STRIPE_SECRET_KEY`: Stripe live or test secret key for checkout sessions
-- `STRIPE_WEBHOOK_SECRET`: Stripe signing secret for `/stripe-webhook`
-- Keep both Stripe values in the hosting provider's secret environment settings; never commit live keys or send them in chat.
+- `DARAJA_ENV`: `sandbox` while testing, then `production` after go-live approval
+- `DARAJA_CONSUMER_KEY`, `DARAJA_CONSUMER_SECRET`, `DARAJA_SHORTCODE`, and `DARAJA_PASSKEY`: credentials from the Safaricom Daraja portal; keep them in secret environment settings
+- `DARAJA_CALLBACK_URL`: public HTTPS endpoint, for example `https://lamutours.co.ke/daraja/callback`
 - `ADMIN_EMAIL` and `ADMIN_PASSWORD`: bootstrap the first admin account when the database has no admins
 
 Install dependencies with `pip install -r requirements.txt`. The service should run the `Procfile` command and expose the provider's `PORT` value.
 
-Before going live, register the webhook endpoint in Stripe Dashboard:
-
-- Endpoint URL: `https://lamutours.co.ke/stripe-webhook`
-- Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.expired`.
-- Use the generated `STRIPE_WEBHOOK_SECRET` value from the Stripe dashboard.
-- For local webhook testing, run `stripe listen --forward-to localhost:5000/stripe-webhook` and set the printed signing secret as `STRIPE_WEBHOOK_SECRET`.
-- Start with Stripe test-mode keys and verify a successful checkout, a cancelled checkout, and an expired checkout before enabling live mode. Confirm that the Stripe account can accept KES before launch.
+Start with Daraja sandbox credentials and use a publicly reachable HTTPS callback URL. Verify successful, cancelled, and timed-out STK requests before switching `DARAJA_ENV` to `production` and using production credentials. Safaricom must approve the shortcode, passkey, and Lipa Na M-Pesa Online product for live transactions. Never commit credentials or put them in callback URLs.
 
 SQLite is suitable for local development, but many hosted platforms use ephemeral filesystems. Use managed PostgreSQL in production so bookings, users, properties, and reviews survive redeployments.
 
@@ -120,14 +116,73 @@ SQLite is suitable for local development, but many hosted platforms use ephemera
 
 The project includes `vercel.json` and `api/index.py` for Vercel's Python runtime. The Vercel config builds the React app from `frontend/package.json`, routes requests through Flask, and packages the built frontend, local image directories, and fallback templates with the Python function. `.vercelignore` omits local environments, secrets, databases, test files, and temporary uploads.
 
+### Continuous integration and deployment
+
+GitHub Actions runs backend tests, builds the frontend and Docker image, and validates Terraform on every push and pull request. To enable automatic Vercel deployments, add these repository secrets in **Settings → Secrets and variables → Actions**:
+
+- `VERCEL_TOKEN`: a Vercel access token
+- `VERCEL_ORG_ID`: the Vercel team or account ID
+- `VERCEL_PROJECT_ID`: this project's Vercel project ID
+
+Then add the repository variable `VERCEL_DEPLOY_ENABLED` with the value `true`. Pull requests from branches in this repository deploy a Vercel Preview; pushes to `main` deploy to Production. Fork pull requests run CI but do not deploy, because GitHub does not provide repository secrets to them. Leave the variable unset to run CI without deployments.
+
 1. Import this repository in the Vercel dashboard, or run `vercel` from the project directory.
 2. Add `lamutours.co.ke` to the Vercel project's **Settings → Domains** and follow Vercel's DNS instructions at your domain registrar. Set the apex domain as the primary domain; add `www.lamutours.co.ke` too if you want Vercel to redirect it.
 3. Set the project environment variables from the hosting section above, including `SITE_URL=https://lamutours.co.ke`, a Redis-backed `RATELIMIT_STORAGE_URI`, and `SESSION_COOKIE_SECURE=true`. The app refuses to start in production if the shared rate-limit store or persistent `SECRET_KEY` is missing. Configure `DATABASE_URL` with a hosted PostgreSQL connection string. Use a Redis-compatible managed store and keep its URL private.
-4. Deploy with `vercel --prod`, then confirm HTTPS works at `https://lamutours.co.ke` and set the Stripe webhook URL to `https://lamutours.co.ke/stripe-webhook`.
+4. Deploy with `vercel --prod`, then confirm HTTPS works at `https://lamutours.co.ke` and set `DARAJA_CALLBACK_URL` to `https://lamutours.co.ke/daraja/callback`.
 
 Vercel must verify the domain through the DNS records it provides before the custom domain serves the deployment. Do not open the HTML files directly when testing bookings; use the deployed URL so the form can reach the Flask booking endpoint.
 
 **Before launch:** configure external object storage for admin/vendor image uploads. Vercel Function filesystems are not durable, so uploads are deliberately rejected on Vercel until persistent storage is integrated. Existing committed files under `images/` and `pictures/` are bundled and served normally. Use image URLs or current static assets until uploads have a persistent storage provider.
+
+## Docker and local Kubernetes
+
+The root `Dockerfile` builds the React frontend and packages it with the Flask app. Running the image directly uses ephemeral SQLite and in-memory rate limits; use Kubernetes for persistent PostgreSQL and shared Redis:
+
+```bash
+docker build -t lamu-tours:local .
+docker run --rm -p 5000:5000 \
+  -e SECRET_KEY="$(openssl rand -hex 32)" \
+  -e SITE_URL=http://localhost:5000 \
+  -e DATABASE_URL=sqlite:////tmp/submissions.db \
+  -e RATELIMIT_STORAGE_URI=memory:// \
+  lamu-tours:local
+```
+
+For Kubernetes, create a local cluster with kind or Minikube, then build and load the image into that cluster:
+
+```bash
+kind create cluster --name lamu-tours
+docker build -t lamu-tours:local .
+kind load docker-image lamu-tours:local --name lamu-tours
+# For Minikube, use: minikube start && minikube image load lamu-tours:local
+```
+
+Terraform in `terraform/` deploys the app, PostgreSQL, Redis, services, and persistent volumes to the Kubernetes context in your kubeconfig. Terraform state contains secret values, so keep it local and private. Create `terraform/terraform.tfvars` (ignored by Git) with stable values:
+
+```hcl
+secret_key       = "replace-with-a-random-value-of-at-least-32-characters"
+postgres_password = "replace-with-a-random-value-of-at-least-16-characters"
+# Optional: set payment, email, or initial admin configuration here.
+# daraja_environment = "sandbox"
+# daraja_consumer_key = "..."
+# daraja_consumer_secret = "..."
+# daraja_shortcode = "..."
+# daraja_passkey = "..."
+# daraja_callback_url = "https://your-public-domain.example/daraja/callback"
+# admin_email = "admin@example.com"
+# admin_password = "replace-with-a-strong-password"
+```
+
+Generate and store your own secret values; do not commit the tfvars file or Terraform state. Apply the configuration and open the app with the output port-forward command:
+
+```bash
+terraform -chdir=terraform init
+terraform -chdir=terraform plan
+terraform -chdir=terraform apply
+```
+
+The Terraform volumes use local host paths on the cluster node named `lamu-tours-control-plane`, so they work without a default StorageClass. Set `storage_node_name = "minikube"` in the tfvars file when using Minikube. These volumes persist across pod restarts but are local to the cluster node; back up data before deleting the cluster. Set `kube_context` in the tfvars file if you do not want Terraform to use the current kubeconfig context. Run `terraform -chdir=terraform output -raw port_forward_command` to print the command for opening the app at `http://localhost:8080`. After rebuilding an image with the same tag, load it into the cluster again and run `kubectl rollout restart deployment/lamu-tours -n lamu-tours`. PostgreSQL and uploaded catalog images use persistent volume claims; Redis rate-limit state is intentionally ephemeral. Keep the default single app replica with the local `ReadWriteOnce` uploads volume. This setup is for local development, not a highly available production deployment. Use HTTPS and managed, backed-up database/cache/storage services before exposing it publicly. The existing Vercel setup remains independent.
 
 For other hosting providers, build the React frontend before starting the Flask `Procfile` command:
 
