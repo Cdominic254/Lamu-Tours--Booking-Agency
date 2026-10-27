@@ -17,8 +17,6 @@ frontend/                React, Vite, and Tailwind application
 images/  pictures/       Committed listing and Lamu photography
 templates/               Server-rendered fallback/admin templates
 tests/                   Backend and deployment configuration tests
-Dockerfile               Multi-stage Flask and frontend image build
-terraform/               Terraform for the local Kubernetes deployment
 ```
 
 Keep `app.py`, `api/index.py`, and `requirements.txt` at the repository root: Vercel's Python builder uses the root dependency file, and `api/index.py` imports the Flask application. Existing package and static-asset folder names are deliberately retained because routes, catalogue records, and the frontend reference them.
@@ -118,7 +116,7 @@ The project includes `vercel.json` and `api/index.py` for Vercel's Python runtim
 
 ### Continuous integration and deployment
 
-GitHub Actions runs backend tests, builds the frontend and Docker image, and validates Terraform on every push and pull request. To enable automatic Vercel deployments, add these repository secrets in **Settings → Secrets and variables → Actions**:
+GitHub Actions runs backend tests and builds the frontend on every push and pull request. To enable automatic Vercel deployments, add these repository secrets in **Settings → Secrets and variables → Actions**:
 
 - `VERCEL_TOKEN`: a Vercel access token
 - `VERCEL_ORG_ID`: the Vercel team or account ID
@@ -134,55 +132,6 @@ Then add the repository variable `VERCEL_DEPLOY_ENABLED` with the value `true`. 
 Vercel must verify the domain through the DNS records it provides before the custom domain serves the deployment. Do not open the HTML files directly when testing bookings; use the deployed URL so the form can reach the Flask booking endpoint.
 
 **Before launch:** configure external object storage for admin/vendor image uploads. Vercel Function filesystems are not durable, so uploads are deliberately rejected on Vercel until persistent storage is integrated. Existing committed files under `images/` and `pictures/` are bundled and served normally. Use image URLs or current static assets until uploads have a persistent storage provider.
-
-## Docker and local Kubernetes
-
-The root `Dockerfile` builds the React frontend and packages it with the Flask app. Running the image directly uses ephemeral SQLite and in-memory rate limits; use Kubernetes for persistent PostgreSQL and shared Redis:
-
-```bash
-docker build -t lamu-tours:local .
-docker run --rm -p 5000:5000 \
-  -e SECRET_KEY="$(openssl rand -hex 32)" \
-  -e SITE_URL=http://localhost:5000 \
-  -e DATABASE_URL=sqlite:////tmp/submissions.db \
-  -e RATELIMIT_STORAGE_URI=memory:// \
-  lamu-tours:local
-```
-
-For Kubernetes, create a local cluster with kind or Minikube, then build and load the image into that cluster:
-
-```bash
-kind create cluster --name lamu-tours
-docker build -t lamu-tours:local .
-kind load docker-image lamu-tours:local --name lamu-tours
-# For Minikube, use: minikube start && minikube image load lamu-tours:local
-```
-
-Terraform in `terraform/` deploys the app, PostgreSQL, Redis, services, and persistent volumes to the Kubernetes context in your kubeconfig. Terraform state contains secret values, so keep it local and private. Create `terraform/terraform.tfvars` (ignored by Git) with stable values:
-
-```hcl
-secret_key       = "replace-with-a-random-value-of-at-least-32-characters"
-postgres_password = "replace-with-a-random-value-of-at-least-16-characters"
-# Optional: set payment, email, or initial admin configuration here.
-# daraja_environment = "sandbox"
-# daraja_consumer_key = "..."
-# daraja_consumer_secret = "..."
-# daraja_shortcode = "..."
-# daraja_passkey = "..."
-# daraja_callback_url = "https://your-public-domain.example/daraja/callback"
-# admin_email = "admin@example.com"
-# admin_password = "replace-with-a-strong-password"
-```
-
-Generate and store your own secret values; do not commit the tfvars file or Terraform state. Apply the configuration and open the app with the output port-forward command:
-
-```bash
-terraform -chdir=terraform init
-terraform -chdir=terraform plan
-terraform -chdir=terraform apply
-```
-
-The Terraform volumes use local host paths on the cluster node named `lamu-tours-control-plane`, so they work without a default StorageClass. Set `storage_node_name = "minikube"` in the tfvars file when using Minikube. These volumes persist across pod restarts but are local to the cluster node; back up data before deleting the cluster. Set `kube_context` in the tfvars file if you do not want Terraform to use the current kubeconfig context. Run `terraform -chdir=terraform output -raw port_forward_command` to print the command for opening the app at `http://localhost:8080`. After rebuilding an image with the same tag, load it into the cluster again and run `kubectl rollout restart deployment/lamu-tours -n lamu-tours`. PostgreSQL and uploaded catalog images use persistent volume claims; Redis rate-limit state is intentionally ephemeral. Keep the default single app replica with the local `ReadWriteOnce` uploads volume. This setup is for local development, not a highly available production deployment. Use HTTPS and managed, backed-up database/cache/storage services before exposing it publicly. The existing Vercel setup remains independent.
 
 For other hosting providers, build the React frontend before starting the Flask `Procfile` command:
 

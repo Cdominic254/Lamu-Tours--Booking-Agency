@@ -37,7 +37,7 @@ function formatPrice(amount, currency) {
 }
 
 function formatKenyanShillings(amount) {
-  return new Intl.NumberFormat('en-KE', {
+  return new Intl.NumberFormat(document.documentElement.lang === 'sw' ? 'sw-KE' : 'en-KE', {
     style: 'currency',
     currency: 'KES',
     maximumFractionDigits: 0,
@@ -206,7 +206,7 @@ function LoadingState({ error, onRetry }) {
 
 function TourCard({ tour, currency }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-[#e9e5db] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+    <article className="tour-card overflow-hidden rounded-2xl border border-[#e9e5db] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
       <a href={`/tour-details.html?id=${encodeURIComponent(tour.slug)}`} aria-label={`View ${tour.name}`}>
         <img className="h-56 w-full object-cover" src={imageUrl(tour.image_url)} alt={tour.name} loading="lazy" />
       </a>
@@ -233,7 +233,7 @@ function TourCard({ tour, currency }) {
 
 function PropertyCard({ property, currency }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-[#e9e5db] bg-white shadow-sm">
+    <article className="stay-card overflow-hidden rounded-2xl border border-[#e9e5db] bg-white shadow-sm">
       <img className="h-52 w-full object-cover" src={imageUrl(property.image_url)} alt={property.name} loading="lazy" />
       <div className="p-5">
         <p className="text-xs font-bold uppercase tracking-wider text-[#a75f3a]">{property.property_type} · {property.location}</p>
@@ -667,7 +667,7 @@ function BookingPage({ catalogue, loading, error, retry }) {
                       setScheduleId(String(schedules.find((item) => item.starts_at.startsWith(date))?.id || ''));
                     }} required disabled={availabilityLoading || departureDates.length === 0}>
                       <option value="">{availabilityLoading ? 'Loading dates…' : 'Choose an available date'}</option>
-                      {departureDates.map((date) => <option value={date} key={date}>{new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}</option>)}
+                      {departureDates.map((date) => <option value={date} key={date}>{new Date(`${date}T12:00:00`).toLocaleDateString(document.documentElement.lang === 'sw' ? 'sw-KE' : 'en-KE', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}</option>)}
                     </select>
                   </label>
                   <label>
@@ -1044,7 +1044,7 @@ function CustomerBookingCard({ booking, csrfToken, onChanged }) {
         <div><h2 className="display-font text-2xl text-[#203b35]">{booking.tour.replaceAll('-', ' ')}</h2><p className="mt-1 text-sm text-[#66736d]">{booking.date} at {booking.time} · {booking.guests} guest{booking.guests === 1 ? '' : 's'}</p></div>
         <span className="rounded-full bg-[#efeee7] px-3 py-1 text-sm font-semibold capitalize text-[#52615b]">{booking.status}</span>
       </div>
-      <p className="mt-3 text-sm text-[#66736d]">Booking #{booking.id} · KSh {Number(booking.amount).toLocaleString()} · Payment: {booking.payment_status}</p>
+      <p className="mt-3 text-sm text-[#66736d]">Booking #{booking.id} · KSh {Number(booking.amount).toLocaleString(document.documentElement.lang === 'sw' ? 'sw-KE' : 'en-KE')} · Payment: {booking.payment_status}</p>
       {error && <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert">{error}</p>}
       {canChange && booking.schedule_id && <div className="mt-5 flex flex-wrap items-end gap-3">
         <label className="min-w-64 flex-1"><span className="field-label">Reschedule departure</span><select className="field" value={scheduleId} onChange={(event) => setScheduleId(event.target.value)}><option value="">Choose another available time</option>{schedules.map((slot) => <option key={slot.id} value={slot.id}>{slot.starts_at.replace('T', ' ')} · {slot.remaining} spaces</option>)}</select></label>
@@ -1118,7 +1118,91 @@ export default function App() {
   const [error, setError] = useState('');
   const [currency, setCurrency] = useState({ code: 'KES', rates: { KES: 1 } });
   const [retryCount, setRetryCount] = useState(0);
+  const [, setLanguageVersion] = useState(0);
   const pathname = window.location.pathname.toLowerCase();
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    const root = document.getElementById('root');
+    if (!root) return undefined;
+
+    const selector = 'main > section, main > div, .feature-card, .coast-gallery-card, .tour-card, .stay-card';
+    const observer = 'IntersectionObserver' in window
+      ? new IntersectionObserver((entries, currentObserver) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          currentObserver.unobserve(entry.target);
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -36px' })
+      : null;
+
+    function observeTargets(node) {
+      if (!(node instanceof Element)) return;
+      const targets = [];
+      if (node.matches(selector)) targets.push(node);
+      targets.push(...node.querySelectorAll(selector));
+      targets.forEach((element, index) => {
+        if (element.classList.contains('scroll-reveal')) return;
+        element.classList.add('scroll-reveal');
+        element.style.setProperty('--reveal-delay', `${Math.min(index, 4) * 70}ms`);
+        observer?.observe(element);
+      });
+    }
+
+    function revealVisibleTargets() {
+      document.querySelectorAll('.motion-ready .scroll-reveal:not(.is-visible)').forEach((element) => {
+        const bounds = element.getBoundingClientRect();
+        if (bounds.top < window.innerHeight - 36 && bounds.bottom > 36) {
+          element.classList.add('is-visible');
+          observer?.unobserve(element);
+        }
+      });
+    }
+
+    function updateMotionVisibility() {
+      const isVisible = document.visibilityState === 'visible';
+      document.documentElement.classList.toggle('motion-ready', isVisible);
+      if (isVisible) {
+        window.requestAnimationFrame(revealVisibleTargets);
+        window.setTimeout(revealVisibleTargets, 150);
+      }
+    }
+
+    observeTargets(root);
+    updateMotionVisibility();
+    document.addEventListener('visibilitychange', updateMotionVisibility);
+    window.addEventListener('scroll', revealVisibleTargets, { passive: true });
+    window.addEventListener('resize', revealVisibleTargets);
+
+    const mutations = new MutationObserver((records) => {
+      records.forEach((record) => record.addedNodes.forEach((node) => {
+        observeTargets(node);
+        window.requestAnimationFrame(revealVisibleTargets);
+        window.setTimeout(revealVisibleTargets, 150);
+      }));
+    });
+    mutations.observe(root, { childList: true, subtree: true });
+
+    return () => {
+      mutations.disconnect();
+      observer?.disconnect();
+      document.removeEventListener('visibilitychange', updateMotionVisibility);
+      window.removeEventListener('scroll', revealVisibleTargets);
+      window.removeEventListener('resize', revealVisibleTargets);
+      document.documentElement.classList.remove('motion-ready');
+    };
+  }, []);
+
+  useEffect(() => {
+    function refreshLocalizedValues() {
+      setLanguageVersion((version) => version + 1);
+    }
+
+    document.addEventListener('lamu-language-changed', refreshLocalizedValues);
+    return () => document.removeEventListener('lamu-language-changed', refreshLocalizedValues);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();

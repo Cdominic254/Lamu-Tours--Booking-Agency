@@ -9,7 +9,7 @@ frontend/dist/
 instance/
 .DS_Store
 
-# Terraform
+# Local infrastructure caches and state files
 .terraform/
 *.tfstate
 *.tfstate.*

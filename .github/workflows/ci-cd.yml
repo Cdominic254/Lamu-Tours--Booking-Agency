@@ -53,44 +53,11 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-  container-build:
-    name: Container image build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build --tag lamu-tours:ci .
-
-  infrastructure-validation:
-    name: Terraform validation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.11.4"
-
-      - name: Check Terraform formatting
-        run: terraform fmt -check -recursive terraform
-
-      - name: Initialize Terraform providers
-        run: terraform -chdir=terraform init -backend=false -input=false
-
-      - name: Validate Terraform configuration
-        run: terraform -chdir=terraform validate
-
   deploy-vercel:
     name: Deploy to Vercel
     needs:
       - backend-tests
       - frontend-build
-      - container-build
-      - infrastructure-validation
     if: >-
       vars.VERCEL_DEPLOY_ENABLED == 'true' &&
       (github.event_name == 'push' && github.ref == 'refs/heads/main' ||
