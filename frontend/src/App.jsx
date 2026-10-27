@@ -37,7 +37,7 @@ function formatPrice(amount, currency) {
 }
 
 function formatKenyanShillings(amount) {
-  return new Intl.NumberFormat('en-KE', {
+  return new Intl.NumberFormat(document.documentElement.lang === 'sw' ? 'sw-KE' : 'en-KE', {
     style: 'currency',
     currency: 'KES',
     maximumFractionDigits: 0,
@@ -206,7 +206,7 @@ function LoadingState({ error, onRetry }) {
 
 function TourCard({ tour, currency }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-[#e9e5db] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+    <article className="tour-card overflow-hidden rounded-2xl border border-[#e9e5db] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
       <a href={`/tour-details.html?id=${encodeURIComponent(tour.slug)}`} aria-label={`View ${tour.name}`}>
         <img className="h-56 w-full object-cover" src={imageUrl(tour.image_url)} alt={tour.name} loading="lazy" />
       </a>
@@ -233,7 +233,7 @@ function TourCard({ tour, currency }) {
 
 function PropertyCard({ property, currency }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-[#e9e5db] bg-white shadow-sm">
+    <article className="stay-card overflow-hidden rounded-2xl border border-[#e9e5db] bg-white shadow-sm">
       <img className="h-52 w-full object-cover" src={imageUrl(property.image_url)} alt={property.name} loading="lazy" />
       <div className="p-5">
         <p className="text-xs font-bold uppercase tracking-wider text-[#a75f3a]">{property.property_type} · {property.location}</p>
@@ -611,12 +611,11 @@ function BookingPage({ catalogue, loading, error, retry }) {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Your booking could not be submitted.');
-      if (result.checkout_url) {
-        window.location.assign(result.checkout_url);
-        return;
-      }
       const emailStatus = result.email_sent ? 'sent' : 'unavailable';
-      window.location.assign(`/booking-confirmation.html?booking_id=${result.booking.id}&email=${emailStatus}&managed=${result.managed}`);
+      const pending = result.payment_pending ? '&pending=true' : '';
+      window.location.assign(
+        `/booking-confirmation.html?booking_id=${result.booking.id}&reference=${encodeURIComponent(result.payment_reference)}&email=${emailStatus}&managed=${result.managed}${pending}`
+      );
     } catch (requestError) {
       setSubmitError(getErrorMessage(requestError));
       setSubmitting(false);
@@ -625,11 +624,11 @@ function BookingPage({ catalogue, loading, error, retry }) {
 
   return (
     <PageShell>
-      <PageBanner eyebrow="A few details, then the island is closer" title="Let’s bring your Lamu plans to life." description="Choose an experience and available departure, enter your details, then pay securely with Stripe to confirm your booking." />
+      <PageBanner eyebrow="A few details, then the island is closer" title="Let’s bring your Lamu plans to life." description="Choose an experience and available departure, then confirm your booking securely with M-Pesa." />
       <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="rounded-3xl border border-[#e9e5db] bg-white p-6 shadow-sm sm:p-9">
           <h2 className="display-font text-3xl text-[#203b35]">Make it a date with the coast.</h2>
-          <p className="mt-2 text-sm leading-6 text-[#66736d]">Choose a published departure, tell us who’s coming, and continue to Stripe’s secure checkout. Your booking is confirmed after Stripe verifies your KSh payment.</p>
+          <p className="mt-2 text-sm leading-6 text-[#66736d]">Choose a published departure, tell us who’s coming, and approve the M-Pesa prompt sent to your Kenyan mobile number. Your booking is confirmed after payment is verified.</p>
           {errorMessage && <p className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800" role="alert">{errorMessage}</p>}
           {submitError && <p className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-800" role="alert">{submitError}</p>}
           {loading || error ? <div className="mt-6"><LoadingState error={error} onRetry={retry} /></div> : (
@@ -652,20 +651,11 @@ function BookingPage({ catalogue, loading, error, retry }) {
               </label>
               <label>
                 <span className="field-label">Country code</span>
-                <select className="field" name="country_code" defaultValue="+254" required>
-                  <option value="+254">Kenya (+254)</option>
-                  <option value="+1">United States/Canada (+1)</option>
-                  <option value="+44">United Kingdom (+44)</option>
-                  <option value="+255">Tanzania (+255)</option>
-                  <option value="+256">Uganda (+256)</option>
-                  <option value="+27">South Africa (+27)</option>
-                  <option value="+91">India (+91)</option>
-                  <option value="+971">United Arab Emirates (+971)</option>
-                </select>
+                <input className="field" name="country_code" value="+254" readOnly aria-readonly="true" />
               </label>
               <label>
                 <span className="field-label">Phone number</span>
-                <input className="field" name="phone" type="tel" inputMode="numeric" pattern="[0-9]+" title="Enter numbers only, without the country code" required />
+                <input className="field" name="phone" type="tel" inputMode="numeric" pattern="(?:0?[17][0-9]{8}|254[17][0-9]{8})" title="Enter a Kenyan mobile number, with or without the leading 0 or 254" required />
               </label>
               {selectedListing?.kind === 'tour' ? (
                 <>
@@ -677,7 +667,7 @@ function BookingPage({ catalogue, loading, error, retry }) {
                       setScheduleId(String(schedules.find((item) => item.starts_at.startsWith(date))?.id || ''));
                     }} required disabled={availabilityLoading || departureDates.length === 0}>
                       <option value="">{availabilityLoading ? 'Loading dates…' : 'Choose an available date'}</option>
-                      {departureDates.map((date) => <option value={date} key={date}>{new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}</option>)}
+                      {departureDates.map((date) => <option value={date} key={date}>{new Date(`${date}T12:00:00`).toLocaleDateString(document.documentElement.lang === 'sw' ? 'sw-KE' : 'en-KE', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}</option>)}
                     </select>
                   </label>
                   <label>
@@ -726,7 +716,7 @@ function BookingPage({ catalogue, loading, error, retry }) {
           <a className="mt-5 inline-block font-semibold text-[#9a5534] hover:underline" href="/contact.html">Talk to our team →</a>
           <div className="mt-7 border-t border-[#d7dfd5] pt-6 text-sm text-[#59675f]">
             <p className="font-semibold text-[#203b35]">A note about booking</p>
-            <p className="mt-2 leading-6">Payments are processed securely by Stripe in Kenyan shillings. Your booking is confirmed only after successful payment.</p>
+            <p className="mt-2 leading-6">Payments are requested securely through M-Pesa STK Push in Kenyan shillings. Your booking is confirmed only after Daraja verifies successful payment.</p>
           </div>
         </aside>
       </section>
@@ -923,26 +913,74 @@ function AuthPage({ register = false }) {
 function ConfirmationPage() {
   const params = new URLSearchParams(window.location.search);
   const bookingId = params.get('booking_id');
+  const paymentReference = params.get('reference');
   const emailStatus = params.get('email');
   const isManaged = params.get('managed') === 'true';
+  const initiationUnknown = params.get('pending') === 'unknown';
+  const [payment, setPayment] = useState(null);
+  const [paymentError, setPaymentError] = useState('');
+
+  useEffect(() => {
+    if (!paymentReference) return undefined;
+    let active = true;
+    let timeout;
+
+    async function refreshPaymentStatus() {
+      try {
+        const response = await fetch(`/api/payment-status/${encodeURIComponent(paymentReference)}`, {
+          headers: { Accept: 'application/json' },
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Payment status could not be loaded.');
+        if (!active) return;
+        setPayment(result);
+        setPaymentError('');
+        if (!['paid', 'failed', 'cancelled'].includes(result.payment_status)) {
+          timeout = window.setTimeout(refreshPaymentStatus, 5000);
+        }
+      } catch (requestError) {
+        if (!active) return;
+        setPaymentError(getErrorMessage(requestError));
+        timeout = window.setTimeout(refreshPaymentStatus, 10000);
+      }
+    }
+
+    refreshPaymentStatus();
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+  }, [paymentReference]);
+
+  const paymentIsConfirmed = payment?.payment_status === 'paid';
+  const paymentFailed = ['failed', 'cancelled'].includes(payment?.payment_status);
 
   return (
     <PageShell>
       <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="rounded-3xl border border-[#e9e5db] bg-white p-8 text-center shadow-sm sm:p-12">
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e9eee8] text-2xl text-[#31554b]" aria-hidden="true">✓</span>
-          <h1 className="display-font mt-6 text-4xl text-[#203b35]">Your request is in.</h1>
-          <p className="mt-4 leading-7 text-[#66736d]">Thanks for booking with Lamu Tours. We’ve received your request, and one of our travel advisors will be in touch to confirm the details.</p>
+          <h1 className="display-font mt-6 text-4xl text-[#203b35]">{paymentIsConfirmed ? 'Your booking is confirmed.' : 'Your request is in.'}</h1>
+          <p className="mt-4 leading-7 text-[#66736d]">
+            {paymentIsConfirmed
+              ? 'Your M-Pesa payment has been verified. Thanks for booking with Lamu Tours.'
+              : paymentFailed
+                ? 'The M-Pesa payment was not completed and this booking was not confirmed. You can try booking again.'
+                : 'We’ve received your request. Check your phone for the M-Pesa prompt and enter your PIN to pay. We’ll confirm your booking after Daraja verifies the payment.'}
+          </p>
           {bookingId && <p className="mt-5 rounded-xl bg-[#f5f3ed] p-4 text-sm font-semibold text-[#203b35]">Booking reference: #{bookingId}</p>}
+          {paymentReference && <p className="mt-3 text-sm text-[#66736d]" role="status">{paymentIsConfirmed ? 'Payment status: paid' : paymentFailed ? 'Payment status: not completed' : initiationUnknown ? 'We could not confirm whether the M-Pesa prompt was sent. Check your phone and payment status before trying again.' : 'Waiting for M-Pesa payment confirmation…'}</p>}
+          {payment?.mpesa_receipt_number && <p className="mt-2 text-sm font-semibold text-[#31554b]">M-Pesa receipt: {payment.mpesa_receipt_number}</p>}
+          {paymentError && <p className="mt-3 text-sm text-[#8a4c2e]" role="status">{paymentError}</p>}
           {emailStatus === 'sent' && <p className="mt-4 text-sm text-[#31554b]" role="status">A confirmation email has been sent to the address you provided.</p>}
           {emailStatus === 'unavailable' && <p className="mt-4 text-sm text-[#8a4c2e]" role="status">Your booking is saved. Email delivery is not configured right now; keep your booking reference for enquiries.</p>}
           {isManaged && <p className="mt-4 text-sm text-[#66736d]"><a className="font-semibold text-[#9a5534] underline" href="/my-bookings">View or manage this booking</a></p>}
           <div className="mt-8 rounded-2xl bg-[#f5f3ed] p-5 text-left">
           <h2 className="font-semibold text-[#203b35]">And now?</h2>
             <ul className="mt-3 list-inside list-disc space-y-2 text-sm leading-6 text-[#66736d]">
-              <li>We’ll review your booking request.</li>
-              <li>A team member will contact you by email or phone.</li>
-              <li>We’ll finalize your tour details and confirm payment.</li>
+              <li>Approve the M-Pesa prompt on your phone, if you have not already.</li>
+              <li>Daraja will securely notify us when payment completes.</li>
+              <li>Your booking status will update here automatically.</li>
             </ul>
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -1006,7 +1044,7 @@ function CustomerBookingCard({ booking, csrfToken, onChanged }) {
         <div><h2 className="display-font text-2xl text-[#203b35]">{booking.tour.replaceAll('-', ' ')}</h2><p className="mt-1 text-sm text-[#66736d]">{booking.date} at {booking.time} · {booking.guests} guest{booking.guests === 1 ? '' : 's'}</p></div>
         <span className="rounded-full bg-[#efeee7] px-3 py-1 text-sm font-semibold capitalize text-[#52615b]">{booking.status}</span>
       </div>
-      <p className="mt-3 text-sm text-[#66736d]">Booking #{booking.id} · KSh {Number(booking.amount).toLocaleString()} · Payment: {booking.payment_status}</p>
+      <p className="mt-3 text-sm text-[#66736d]">Booking #{booking.id} · KSh {Number(booking.amount).toLocaleString(document.documentElement.lang === 'sw' ? 'sw-KE' : 'en-KE')} · Payment: {booking.payment_status}</p>
       {error && <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert">{error}</p>}
       {canChange && booking.schedule_id && <div className="mt-5 flex flex-wrap items-end gap-3">
         <label className="min-w-64 flex-1"><span className="field-label">Reschedule departure</span><select className="field" value={scheduleId} onChange={(event) => setScheduleId(event.target.value)}><option value="">Choose another available time</option>{schedules.map((slot) => <option key={slot.id} value={slot.id}>{slot.starts_at.replace('T', ' ')} · {slot.remaining} spaces</option>)}</select></label>
@@ -1080,7 +1118,91 @@ export default function App() {
   const [error, setError] = useState('');
   const [currency, setCurrency] = useState({ code: 'KES', rates: { KES: 1 } });
   const [retryCount, setRetryCount] = useState(0);
+  const [, setLanguageVersion] = useState(0);
   const pathname = window.location.pathname.toLowerCase();
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    const root = document.getElementById('root');
+    if (!root) return undefined;
+
+    const selector = 'main > section, main > div, .feature-card, .coast-gallery-card, .tour-card, .stay-card';
+    const observer = 'IntersectionObserver' in window
+      ? new IntersectionObserver((entries, currentObserver) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          currentObserver.unobserve(entry.target);
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -36px' })
+      : null;
+
+    function observeTargets(node) {
+      if (!(node instanceof Element)) return;
+      const targets = [];
+      if (node.matches(selector)) targets.push(node);
+      targets.push(...node.querySelectorAll(selector));
+      targets.forEach((element, index) => {
+        if (element.classList.contains('scroll-reveal')) return;
+        element.classList.add('scroll-reveal');
+        element.style.setProperty('--reveal-delay', `${Math.min(index, 4) * 70}ms`);
+        observer?.observe(element);
+      });
+    }
+
+    function revealVisibleTargets() {
+      document.querySelectorAll('.motion-ready .scroll-reveal:not(.is-visible)').forEach((element) => {
+        const bounds = element.getBoundingClientRect();
+        if (bounds.top < window.innerHeight - 36 && bounds.bottom > 36) {
+          element.classList.add('is-visible');
+          observer?.unobserve(element);
+        }
+      });
+    }
+
+    function updateMotionVisibility() {
+      const isVisible = document.visibilityState === 'visible';
+      document.documentElement.classList.toggle('motion-ready', isVisible);
+      if (isVisible) {
+        window.requestAnimationFrame(revealVisibleTargets);
+        window.setTimeout(revealVisibleTargets, 150);
+      }
+    }
+
+    observeTargets(root);
+    updateMotionVisibility();
+    document.addEventListener('visibilitychange', updateMotionVisibility);
+    window.addEventListener('scroll', revealVisibleTargets, { passive: true });
+    window.addEventListener('resize', revealVisibleTargets);
+
+    const mutations = new MutationObserver((records) => {
+      records.forEach((record) => record.addedNodes.forEach((node) => {
+        observeTargets(node);
+        window.requestAnimationFrame(revealVisibleTargets);
+        window.setTimeout(revealVisibleTargets, 150);
+      }));
+    });
+    mutations.observe(root, { childList: true, subtree: true });
+
+    return () => {
+      mutations.disconnect();
+      observer?.disconnect();
+      document.removeEventListener('visibilitychange', updateMotionVisibility);
+      window.removeEventListener('scroll', revealVisibleTargets);
+      window.removeEventListener('resize', revealVisibleTargets);
+      document.documentElement.classList.remove('motion-ready');
+    };
+  }, []);
+
+  useEffect(() => {
+    function refreshLocalizedValues() {
+      setLanguageVersion((version) => version + 1);
+    }
+
+    document.addEventListener('lamu-language-changed', refreshLocalizedValues);
+    return () => document.removeEventListener('lamu-language-changed', refreshLocalizedValues);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();

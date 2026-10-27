@@ -17,6 +17,43 @@ async function apiRequest(path, { method = 'GET', data, csrfToken, signal } = {}
   return result;
 }
 
+function formatNumber(value) {
+  const locale = document.documentElement.lang === 'sw' ? 'sw-KE' : 'en-KE';
+  return Number(value).toLocaleString(locale);
+}
+
+function LanguageToggle() {
+  const [language, setLanguage] = useState(document.documentElement.lang === 'sw' ? 'sw' : 'en');
+
+  useEffect(() => {
+    function syncLanguage(event) {
+      setLanguage(event.detail.language);
+    }
+
+    document.addEventListener('lamu-language-changed', syncLanguage);
+    return () => document.removeEventListener('lamu-language-changed', syncLanguage);
+  }, []);
+
+  function toggleLanguage() {
+    const nextLanguage = language === 'en' ? 'sw' : 'en';
+    window.setLamuLanguage?.(nextLanguage);
+    setLanguage(nextLanguage);
+  }
+
+  return (
+    <button
+      className="rounded-full border border-[#dedbd2] px-4 py-2 text-sm font-semibold text-[#52615b] hover:bg-[#eeeee6]"
+      type="button"
+      data-language-toggle
+      aria-label={language === 'en' ? 'Switch to Kiswahili' : 'Switch to English'}
+      aria-pressed={language === 'sw'}
+      onClick={toggleLanguage}
+    >
+      {language === 'en' ? 'Kiswahili' : 'English'}
+    </button>
+  );
+}
+
 function PortalCard({ children }) {
   return <main className="mx-auto max-w-3xl px-5 py-12 sm:px-8 sm:py-20"><div className="rounded-3xl border border-[#e9e5db] bg-white p-6 shadow-sm sm:p-10">{children}</div></main>;
 }
@@ -38,7 +75,7 @@ function PortalLogin({ role }) {
   const error = new URLSearchParams(window.location.search).get('error');
   return (
     <div className="min-h-screen bg-[#f8f7f2]">
-      <header className="border-b border-[#e9e5db] bg-white px-5 py-4 sm:px-8"><div className="mx-auto max-w-7xl"><PortalIdentity>{isVendor ? 'Vendor portal' : 'Admin portal'}</PortalIdentity></div></header>
+      <header className="border-b border-[#e9e5db] bg-white px-5 py-4 sm:px-8"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4"><PortalIdentity>{isVendor ? 'Vendor portal' : 'Admin portal'}</PortalIdentity><LanguageToggle /></div></header>
       <PortalCard>
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a75f3a]">{isVendor ? 'Vendor access' : 'Administration'}</p>
         <h1 className="display-font mt-3 text-4xl text-[#203b35]">{isVendor ? 'Welcome back to your island business.' : 'Welcome to your control room.'}</h1>
@@ -107,7 +144,7 @@ export function VendorRegistrationPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f7f2]">
-      <header className="border-b border-[#e9e5db] bg-white px-5 py-4 sm:px-8"><div className="mx-auto max-w-7xl"><PortalIdentity>Vendor portal</PortalIdentity></div></header>
+      <header className="border-b border-[#e9e5db] bg-white px-5 py-4 sm:px-8"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4"><PortalIdentity>Vendor portal</PortalIdentity><LanguageToggle /></div></header>
       <PortalCard>
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a75f3a]">Partner with us</p>
         <h1 className="display-font mt-3 text-4xl text-[#203b35]">Bring your Lamu experience to more travelers.</h1>
@@ -137,6 +174,7 @@ function PortalHeader({ role, actor, onSignOut }) {
           <h1 className="display-font mt-1 text-3xl">{actor}</h1>
         </div>
         <div className="flex items-center gap-3">
+          <LanguageToggle />
           <a className="rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10" href="/">Public site</a>
           {onSignOut && <button className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#203b35] hover:bg-[#e8eee9]" type="button" onClick={onSignOut}>Sign out</button>}
         </div>
@@ -315,8 +353,8 @@ function CatalogSection({ title, items, fields, basePath, onMutation, ownerLabel
                   <h3 className="font-semibold text-[#203b35]">{item.name}</h3>
                   {ownerLabel?.(item) && <p className="mt-1 text-xs text-[#66736d]">{ownerLabel(item)}</p>}
                 </div>
-                {item.price != null && <span className="text-sm font-semibold text-[#9a5534]">KSh {Number(item.price).toLocaleString()}</span>}
-                {item.price_per_night != null && <span className="text-sm font-semibold text-[#9a5534]">KSh {Number(item.price_per_night).toLocaleString()} / night</span>}
+                {item.price != null && <span className="text-sm font-semibold text-[#9a5534]">KSh {formatNumber(item.price)}</span>}
+                {item.price_per_night != null && <span className="text-sm font-semibold text-[#9a5534]">KSh {formatNumber(item.price_per_night)} / night</span>}
               </div>
               <DataForm fields={fields} item={item} submitLabel="Save changes" onSubmit={(data) => update(url, data)}>
                 {fields.some((field) => field.name === 'image_url') && <ImageUpload />}
@@ -393,7 +431,7 @@ function VendorBookingsSection({ csrfToken }) {
               <div><h3 className="font-semibold capitalize text-[#203b35]">{booking.tour_name}</h3><p className="mt-1 text-sm text-[#66736d]">Booking #{booking.id} · {booking.date} at {booking.time} · {booking.guests} guest{booking.guests === 1 ? '' : 's'}</p><p className="mt-1 text-sm text-[#66736d]">{booking.name} · {booking.email} · {booking.phone}</p></div>
               <span className="rounded-full bg-[#efeee7] px-3 py-1 text-sm font-semibold capitalize text-[#52615b]">{booking.status.replaceAll('_', ' ')}</span>
             </div>
-            <p className="mt-2 text-xs text-[#7a857f]">KSh {Number(booking.amount).toLocaleString()} · Payment: {booking.payment_status}</p>
+            <p className="mt-2 text-xs text-[#7a857f]">KSh {formatNumber(booking.amount)} · Payment: {booking.payment_status}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {(transitions[booking.status] || []).map((status) => (
                 <button className={`rounded-full px-4 py-2 text-sm font-semibold ${status === 'cancelled' ? 'border border-red-200 text-red-700' : 'bg-[#203b35] text-white hover:bg-[#31554b]'}`} key={status} type="button" onClick={() => updateStatus(booking, status)}>
@@ -660,7 +698,8 @@ function DashboardLoadError({ role, error, onRetry }) {
 function displayTimestamp(value) {
   if (!value) return '—';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  const locale = document.documentElement.lang === 'sw' ? 'sw-KE' : 'en-KE';
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString(locale);
 }
 
 function AdminUserManagement({ customers, vendors, onMutation }) {
@@ -749,7 +788,7 @@ function AdminBookingCard({ booking, onMutation }) {
         </div>
         <span className="rounded-full bg-[#efeee7] px-3 py-1 text-sm font-semibold capitalize text-[#52615b]">{booking.status.replaceAll('_', ' ')}</span>
       </div>
-      <p className="mt-3 text-sm text-[#52615b]">KSh {Number(booking.amount).toLocaleString()} · Payment: {booking.payment_status} · Refund: {booking.refund_status.replaceAll('_', ' ')}</p>
+      <p className="mt-3 text-sm text-[#52615b]">KSh {formatNumber(booking.amount)} · Payment: {booking.payment_status} · Refund: {booking.refund_status.replaceAll('_', ' ')}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {['requested', 'confirmed', 'in_preparation'].includes(booking.status) && (
           <button
@@ -863,14 +902,14 @@ function AdminOperationsSection() {
         <div className="grid gap-4 sm:grid-cols-3">
           {[
             ['All bookings', data.analytics.total_bookings],
-            ['Paid revenue', `KSh ${Number(data.analytics.paid_revenue).toLocaleString()}`],
-            ['Commission earned', `KSh ${Number(data.analytics.commission_earned).toLocaleString()}`],
+            ['Paid revenue', `KSh ${formatNumber(data.analytics.paid_revenue)}`],
+            ['Commission earned', `KSh ${formatNumber(data.analytics.commission_earned)}`],
           ].map(([label, value]) => <div className="rounded-xl bg-[#f5f3ed] p-4" key={label}><p className="text-sm text-[#66736d]">{label}</p><p className="display-font mt-2 text-2xl text-[#203b35]">{value}</p></div>)}
         </div>
         <div className="mt-5 space-y-3">
           {data.analytics.by_tour.map((tour) => <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f0ede6] py-3 text-sm" key={tour.tour}>
             <div><p className="font-semibold text-[#203b35]">{tour.tour_name}</p><p className="text-[#66736d]">{tour.bookings} booking{tour.bookings === 1 ? '' : 's'}</p></div>
-            <div className="text-right text-[#52615b]"><p>KSh {Number(tour.paid_revenue).toLocaleString()} paid</p><p>KSh {Number(tour.commission_earned).toLocaleString()} commission</p></div>
+            <div className="text-right text-[#52615b]"><p>KSh {formatNumber(tour.paid_revenue)} paid</p><p>KSh {formatNumber(tour.commission_earned)} commission</p></div>
           </div>)}
           {data.analytics.by_tour.length === 0 && <p className="text-sm text-[#66736d]">Analytics will appear when bookings are received.</p>}
         </div>

@@ -83,16 +83,44 @@
         <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Kiswahili">Kiswahili</button>
     </nav>
     <div class="container">
-        <h2>Your booking request is confirmed</h2>
-        <p>Thank you for booking with Lamu Tours & Booking Agency. We have received your request and one of our travel advisors will contact you shortly to confirm the details.</p>
+        <h2>Your booking request is received</h2>
+        <p>Thank you for booking with Lamu Tours & Booking Agency. Check your phone for the M-Pesa prompt and enter your PIN. Your booking is confirmed after we verify payment.</p>
         <div class="details">
             <p><strong>What happens next:</strong></p>
             <ul>
-                <li>We will review your booking request.</li>
-                <li>One of our team members will contact you by email or phone.</li>
-                <li>Your tour details will be finalized and payment confirmed.</li>
+                <li>Approve the M-Pesa payment prompt on your phone.</li>
+                <li>Daraja will notify us when payment completes.</li>
+                <li>Keep your booking reference for any questions.</li>
             </ul>
         </div>
+        <script>
+            const paymentReference = new URLSearchParams(window.location.search).get('reference');
+            if (paymentReference) {
+                const status = document.createElement('p');
+                status.setAttribute('role', 'status');
+                status.textContent = 'Waiting for M-Pesa payment confirmation…';
+                document.querySelector('.container').append(status);
+                const poll = async () => {
+                    try {
+                        const response = await fetch(`/api/payment-status/${encodeURIComponent(paymentReference)}`);
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error || 'Payment status unavailable.');
+                        status.textContent = result.payment_status === 'paid'
+                            ? `Payment confirmed${result.mpesa_receipt_number ? ` · M-Pesa receipt: ${result.mpesa_receipt_number}` : ''}.`
+                            : ['failed', 'cancelled'].includes(result.payment_status)
+                                ? 'M-Pesa payment was not completed; this booking was not confirmed.'
+                                : 'Waiting for M-Pesa payment confirmation…';
+                        if (!['paid', 'failed', 'cancelled'].includes(result.payment_status)) {
+                            window.setTimeout(poll, 5000);
+                        }
+                    } catch {
+                        status.textContent = 'Payment status is temporarily unavailable. Keep your booking reference and check again shortly.';
+                        window.setTimeout(poll, 10000);
+                    }
+                };
+                poll();
+            }
+        </script>
         <p><a href="index.html">Return to Home</a> or <a href="tours.html">Browse more tours</a>.</p>
     </div>
     <footer class="site-footer"><p>&copy; 2026 Lamu Tours &amp; Booking Agency. All rights reserved.</p><p>LamuTours.com is your trusted partner for online travel and related services.</p><div class="footer-partners" aria-label="Partners"><span class="footer-partner">Booking.com</span><span class="footer-partner">Kenya Tourism Board</span><span class="footer-partner">Ministry of Wildlife and Tourism</span></div></footer>

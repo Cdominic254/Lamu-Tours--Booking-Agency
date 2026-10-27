@@ -8,3 +8,10 @@ frontend/dist/
 *.db-journal
 instance/
 .DS_Store
+
+# Local infrastructure caches and state files
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json

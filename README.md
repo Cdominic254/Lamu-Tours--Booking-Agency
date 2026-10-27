@@ -109,11 +109,7 @@ docker run --env-file .env -p 8000:8000 lamu-backend
 
 Key environment variables:
 
-- `DATABASE_URL`: PostgreSQL connection string
-- `REDIS_URL`: Redis connection string
-- `SECRET_KEY`: Secret for JWT signing
-- `ENV`: `development`, `staging`, or `production`
-- Payment and SMS provider keys (as needed)
+Tour bookings are paid in KES through Safaricom Daraja Lipa Na M-Pesa Online (STK Push). A booking remains pending until its callback is checked against Daraja's STK Query API; browser redirects are not used as proof of payment. The departure remains reserved while the customer completes the M-Pesa prompt, and failed payments release the reservation. Pending payments cannot be cancelled because Daraja does not provide a reliable way to withdraw an STK prompt after it has been sent. Booking and status emails are sent when SMTP is configured. WhatsApp delivery is not enabled; the messaging service can be extended with a WhatsApp provider when credentials and provider preferences are available.
 
 ## Testing
 
@@ -123,12 +119,22 @@ Run tests:
 pytest
 ```
 
-Structure:
+Configure these environment variables on the hosting provider:
 
-- `tests/api/` – endpoint-level tests
-- `tests/services/` – business logic tests (booking, payments, etc.)
+- `SECRET_KEY`: long random value used to sign sessions
+- `DATABASE_URL`: managed PostgreSQL URL for production persistence, or SQLite for temporary/single-instance hosting
+- `SITE_URL=https://lamutours.co.ke`: canonical public site URL
+- `SESSION_COOKIE_SECURE=true` when the site is served over HTTPS
+- `RATELIMIT_STORAGE_URI`: shared Redis URL for production rate-limit state (`memory://` is only for local development and the app refuses to start in production with it)
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `EMAIL_FROM`, and `EMAIL_TO` for contact notifications
+- `DARAJA_ENV`: `sandbox` while testing, then `production` after go-live approval
+- `DARAJA_CONSUMER_KEY`, `DARAJA_CONSUMER_SECRET`, `DARAJA_SHORTCODE`, and `DARAJA_PASSKEY`: credentials from the Safaricom Daraja portal; keep them in secret environment settings
+- `DARAJA_CALLBACK_URL`: public HTTPS endpoint, for example `https://lamutours.co.ke/daraja/callback`
+- `ADMIN_EMAIL` and `ADMIN_PASSWORD`: bootstrap the first admin account when the database has no admins
 
-Aim for tests that reflect acceptance criteria in `docs/requirements.md`.
+Install dependencies with `pip install -r requirements.txt`. The service should run the `Procfile` command and expose the provider's `PORT` value.
+
+Start with Daraja sandbox credentials and use a publicly reachable HTTPS callback URL. Verify successful, cancelled, and timed-out STK requests before switching `DARAJA_ENV` to `production` and using production credentials. Safaricom must approve the shortcode, passkey, and Lipa Na M-Pesa Online product for live transactions. Never commit credentials or put them in callback URLs.
 
 ## Documentation
 

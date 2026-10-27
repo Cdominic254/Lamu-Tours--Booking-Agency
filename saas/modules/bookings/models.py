@@ -1,4 +1,5 @@
 from datetime import datetime
+import secrets
 
 from saas.extensions import db
 
@@ -18,10 +19,19 @@ class Booking(db.Model):
     amount = db.Column(db.Float, nullable=False, default=0.0)
     commission_rate = db.Column(db.Float, nullable=False, default=15.0)
     payment_status = db.Column(db.String(30), nullable=False, default='pending')
-    stripe_session_id = db.Column(db.String(255), nullable=True, unique=True)
+    payment_reference = db.Column(db.String(64), nullable=True, default=lambda: secrets.token_urlsafe(32))
+    checkout_request_id = db.Column(db.String(100), nullable=True)
+    merchant_request_id = db.Column(db.String(100), nullable=True)
+    mpesa_receipt_number = db.Column(db.String(30), nullable=True, unique=True)
     refund_status = db.Column(db.String(30), nullable=False, default='none')
     status = db.Column(db.String(30), nullable=False, default='requested')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.Index('uq_booking_payment_reference', 'payment_reference', unique=True),
+        db.Index('uq_booking_checkout_request_id', 'checkout_request_id', unique=True),
+        db.Index('uq_booking_mpesa_receipt_number', 'mpesa_receipt_number', unique=True),
+    )
 
     def to_dict(self):
         return {
@@ -39,6 +49,7 @@ class Booking(db.Model):
             'amount': self.amount,
             'commission_rate': self.commission_rate,
             'payment_status': self.payment_status,
+            'mpesa_receipt_number': self.mpesa_receipt_number,
             'refund_status': self.refund_status,
             'status': self.status,
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,

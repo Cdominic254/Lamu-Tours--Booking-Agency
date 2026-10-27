@@ -45,7 +45,7 @@ def test_public_review_submissions_are_rate_limited(application_client):
 
 
 def test_booking_checkout_creation_is_rate_limited(application_client, monkeypatch):
-    monkeypatch.setattr(application, 'STRIPE_SECRET_KEY', '')
+    monkeypatch.setattr(application, 'is_daraja_configured', lambda: False)
     responses = [
         application_client.post(
             '/booking-confirmation',

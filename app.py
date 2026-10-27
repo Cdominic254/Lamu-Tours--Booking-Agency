@@ -16,7 +16,6 @@ from datetime import datetime, timedelta
 from functools import wraps
 from email.message import EmailMessage
 
-import stripe
 from dotenv import load_dotenv
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -28,6 +27,12 @@ from werkzeug.utils import secure_filename
 
 from saas.extensions import db
 from saas.modules.bookings.models import Booking, BookingDispute
+from saas.modules.bookings.daraja import (
+    DarajaError,
+    initiate_stk_push,
+    is_configured as is_daraja_configured,
+    query_stk_push,
+)
 from saas.modules.bookings.settings import AdminSetting
 from saas.modules.bookings.service import (
     LAMU_TIMEZONE,
@@ -54,8 +59,6 @@ EMAIL_FROM = os.environ.get('EMAIL_FROM', EMAIL_USERNAME)
 EMAIL_TO = os.environ.get('EMAIL_TO', 'info@lamutours.com')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in ('1', 'true', 'yes')
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'false').lower() in ('1', 'true', 'yes')
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 SITE_URL = os.environ.get('SITE_URL', 'https://lamutours.co.ke').strip().rstrip('/')
 IS_PRODUCTION = (
     os.environ.get('FLASK_ENV', '').lower() == 'production'
@@ -87,8 +90,6 @@ limiter = Limiter(
     storage_uri=RATE_LIMIT_STORAGE_URI,
     headers_enabled=True,
 )
-if STRIPE_SECRET_KEY:
-    stripe.api_key = STRIPE_SECRET_KEY
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
@@ -106,8 +107,14 @@ def ensure_booking_payment_columns():
             connection.execute(text('ALTER TABLE booking ADD COLUMN amount FLOAT NOT NULL DEFAULT 0.0'))
         if 'payment_status' not in booking_columns:
             connection.execute(text("ALTER TABLE booking ADD COLUMN payment_status VARCHAR(30) NOT NULL DEFAULT 'pending'"))
-        if 'stripe_session_id' not in booking_columns:
-            connection.execute(text('ALTER TABLE booking ADD COLUMN stripe_session_id VARCHAR(255)'))
+        if 'payment_reference' not in booking_columns:
+            connection.execute(text('ALTER TABLE booking ADD COLUMN payment_reference VARCHAR(64)'))
+        if 'checkout_request_id' not in booking_columns:
+            connection.execute(text('ALTER TABLE booking ADD COLUMN checkout_request_id VARCHAR(100)'))
+        if 'merchant_request_id' not in booking_columns:
+            connection.execute(text('ALTER TABLE booking ADD COLUMN merchant_request_id VARCHAR(100)'))
+        if 'mpesa_receipt_number' not in booking_columns:
+            connection.execute(text('ALTER TABLE booking ADD COLUMN mpesa_receipt_number VARCHAR(30)'))
         if 'user_id' not in booking_columns:
             connection.execute(text('ALTER TABLE booking ADD COLUMN user_id INTEGER'))
         if 'schedule_id' not in booking_columns:
@@ -118,6 +125,18 @@ def ensure_booking_payment_columns():
             connection.execute(text('ALTER TABLE booking ADD COLUMN commission_rate FLOAT NOT NULL DEFAULT 15.0'))
         if 'refund_status' not in booking_columns:
             connection.execute(text("ALTER TABLE booking ADD COLUMN refund_status VARCHAR(30) NOT NULL DEFAULT 'none'"))
+        connection.execute(text(
+            'CREATE UNIQUE INDEX IF NOT EXISTS uq_booking_payment_reference '
+            'ON booking (payment_reference)'
+        ))
+        connection.execute(text(
+            'CREATE UNIQUE INDEX IF NOT EXISTS uq_booking_checkout_request_id '
+            'ON booking (checkout_request_id)'
+        ))
+        connection.execute(text(
+            'CREATE UNIQUE INDEX IF NOT EXISTS uq_booking_mpesa_receipt_number '
+            'ON booking (mpesa_receipt_number)'
+        ))
 
 
 def ensure_identity_columns():
@@ -482,98 +501,139 @@ def save_booking(booking: dict) -> Booking:
     return save_booking_service(booking)
 
 
-def create_stripe_checkout_session(booking: Booking):
-    if not STRIPE_SECRET_KEY:
-        raise RuntimeError('Stripe is not configured. Set STRIPE_SECRET_KEY to enable payments.')
+def normalize_mpesa_phone(country_code: str, phone: str) -> str:
+    if country_code != '+254':
+        raise ValueError('M-Pesa payments require a Kenyan phone number.')
+    if not phone.isdigit():
+        raise ValueError('Enter your M-Pesa phone number using digits only.')
 
-    line_item_name = booking.tour.replace('-', ' ').title()
-    line_total = int(round(booking.amount * 100))
-    checkout_session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
-        customer_email=booking.email,
-        client_reference_id=str(booking.id),
-        line_items=[{
-            'price_data': {
-                'currency': 'kes',
-                'unit_amount': line_total,
-                'product_data': {
-                    'name': f'Lamu booking: {line_item_name}',
-                    'description': f'{booking.guests} guest(s) · booking #{booking.id}'
-                },
-            },
-            'quantity': 1,
-        }],
-        mode='payment',
-        success_url=f"{SITE_URL}/payment-success?booking_id={booking.id}&session_id={{CHECKOUT_SESSION_ID}}",
-        cancel_url=f"{SITE_URL}/payment-cancel?booking_id={booking.id}",
-        metadata={'booking_id': str(booking.id)},
-        idempotency_key=f'booking-checkout-{booking.id}',
+    normalized = phone
+    if len(normalized) == 10 and normalized.startswith('0'):
+        normalized = normalized[1:]
+    elif len(normalized) == 12 and normalized.startswith('254'):
+        normalized = normalized[3:]
+    if len(normalized) != 9 or normalized[0] not in {'1', '7'}:
+        raise ValueError('Enter a valid Kenyan mobile number for M-Pesa.')
+    return f'254{normalized}'
+
+
+def create_daraja_stk_push(booking: Booking):
+    result = initiate_stk_push(
+        booking.phone.removeprefix('+'),
+        int(round(booking.amount)),
+        booking.id,
     )
-    booking.stripe_session_id = checkout_session.id
+    booking.checkout_request_id = result['checkout_request_id']
+    booking.merchant_request_id = result.get('merchant_request_id')
     db.session.commit()
-    return checkout_session.url
+    return result
 
 
-def confirm_stripe_checkout(checkout_session):
-    booking_id = checkout_session.get('metadata', {}).get('booking_id')
-    session_id = checkout_session.get('id')
-    if not booking_id or not str(booking_id).isdigit() or not session_id:
-        return None
-
-    booking = db.session.get(Booking, int(booking_id))
-    if (
-        not booking
-        or booking.stripe_session_id != session_id
-        or checkout_session.get('client_reference_id') != str(booking.id)
-        or checkout_session.get('status') != 'complete'
-        or checkout_session.get('payment_status') != 'paid'
-        or checkout_session.get('currency', '').lower() != 'kes'
-        or checkout_session.get('amount_total') != int(round(booking.amount * 100))
-        or booking.payment_status == 'refunded'
-        or booking.payment_status == 'cancelled'
-        or booking.status == 'cancelled'
-    ):
-        return None
-
-    already_paid = booking.payment_status == 'paid'
-    booking.payment_status = 'paid'
-    if booking.status != 'cancelled':
-        booking.status = 'confirmed'
-    db.session.commit()
-    if not already_paid:
-        send_booking_confirmation(booking)
-    return booking
+def _callback_metadata(callback):
+    metadata_container = callback.get('CallbackMetadata', {})
+    if not isinstance(metadata_container, dict):
+        return {}
+    metadata = metadata_container.get('Item', [])
+    if not isinstance(metadata, list):
+        return {}
+    return {
+        item.get('Name'): item.get('Value')
+        for item in metadata
+        if isinstance(item, dict) and isinstance(item.get('Name'), str)
+    }
 
 
-def expire_booking_checkout(booking: Booking):
-    if not booking.stripe_session_id or booking.payment_status != 'pending':
+def _release_failed_mpesa_booking(booking: Booking, result_description: str):
+    if booking.payment_status != 'pending':
         return
-    if not STRIPE_SECRET_KEY:
-        raise RuntimeError('Stripe is not configured.')
-    checkout_session = stripe.checkout.Session.retrieve(booking.stripe_session_id)
-    if checkout_session.status == 'open':
-        stripe.checkout.Session.expire(booking.stripe_session_id)
-
-
-def expire_booking_from_webhook(checkout_session):
-    booking_id = checkout_session.get('metadata', {}).get('booking_id')
-    session_id = checkout_session.get('id')
-    if not booking_id or not str(booking_id).isdigit() or not session_id:
-        return
-
-    booking = db.session.get(Booking, int(booking_id))
-    if not booking or booking.stripe_session_id != session_id or booking.payment_status != 'pending':
-        return
-
-    try:
-        release_schedule(booking.schedule_id, booking.guests)
-    except ValueError:
-        db.session.rollback()
-        app.logger.exception('Could not release availability for expired checkout %s.', session_id)
-        return
-    booking.payment_status = 'cancelled'
+    release_schedule(booking.schedule_id, booking.guests)
+    booking.payment_status = 'failed'
     booking.status = 'cancelled'
     db.session.commit()
+    app.logger.info('M-Pesa payment failed for booking %s: %s', booking.id, result_description)
+
+
+def process_daraja_callback(payload):
+    body = payload.get('Body')
+    if not isinstance(body, dict) or not isinstance(body.get('stkCallback'), dict):
+        return 'Invalid callback payload', 400
+    stk_callback = body['stkCallback']
+    checkout_request_id = stk_callback.get('CheckoutRequestID')
+    merchant_request_id = stk_callback.get('MerchantRequestID')
+    callback_result_code = stk_callback.get('ResultCode')
+    if not all(isinstance(value, str) and value for value in (checkout_request_id, merchant_request_id)):
+        return 'Invalid callback references', 400
+    try:
+        callback_result_code = int(callback_result_code)
+    except (TypeError, ValueError):
+        return 'Invalid callback result', 400
+
+    booking = Booking.query.filter_by(checkout_request_id=checkout_request_id).first()
+    if not booking or booking.merchant_request_id != merchant_request_id:
+        app.logger.warning('Ignoring unmatched Daraja callback.')
+        return '', 204
+    if booking.payment_status != 'pending':
+        return '', 204
+
+    try:
+        query_result = query_stk_push(checkout_request_id)
+    except DarajaError:
+        app.logger.exception('Could not verify Daraja callback for booking %s.', booking.id)
+        return 'Payment verification temporarily unavailable', 503
+
+    try:
+        query_result_code = int(query_result.get('ResultCode', -1))
+    except (TypeError, ValueError):
+        query_result_code = -1
+    if (
+        str(query_result.get('ResponseCode', '')) != '0'
+        or query_result.get('CheckoutRequestID') != checkout_request_id
+        or query_result_code != callback_result_code
+    ):
+        app.logger.warning('Daraja query did not match callback for booking %s.', booking.id)
+        return 'Payment verification is pending', 503
+
+    if callback_result_code != 0:
+        try:
+            _release_failed_mpesa_booking(
+                booking,
+                str(query_result.get('ResultDesc') or stk_callback.get('ResultDesc') or 'Payment was not completed.'),
+            )
+        except ValueError:
+            db.session.rollback()
+            app.logger.exception('Could not release capacity for failed M-Pesa booking %s.', booking.id)
+            return 'Could not update booking availability', 503
+        return '', 204
+
+    metadata = _callback_metadata(stk_callback)
+    receipt = metadata.get('MpesaReceiptNumber')
+    phone_number = metadata.get('PhoneNumber')
+    try:
+        amount = int(metadata.get('Amount'))
+        phone_number = str(int(phone_number))
+    except (TypeError, ValueError):
+        return 'Invalid payment details', 400
+    if (
+        not isinstance(receipt, str)
+        or not receipt
+        or amount != int(round(booking.amount))
+        or phone_number != booking.phone.removeprefix('+')
+        or booking.status == 'cancelled'
+    ):
+        app.logger.error('Daraja payment details did not match booking %s.', booking.id)
+        return 'Payment details did not match booking', 400
+
+    booking.payment_status = 'paid'
+    booking.status = 'confirmed'
+    booking.mpesa_receipt_number = receipt
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        app.logger.exception('Daraja receipt could not be uniquely assigned to booking %s.', booking.id)
+        return 'Payment receipt was already processed', 409
+    send_booking_confirmation(booking, payment_confirmed=True)
+    return '', 204
 
 
 def send_email_notification(submission: dict) -> bool:
@@ -613,7 +673,7 @@ def send_email_notification(submission: dict) -> bool:
         return False
 
 
-def send_booking_confirmation(booking: Booking, checkout_url=None) -> bool:
+def send_booking_confirmation(booking: Booking, *, payment_confirmed=False) -> bool:
     if not (EMAIL_HOST and EMAIL_USERNAME and EMAIL_PASSWORD and EMAIL_FROM):
         app.logger.warning('Booking confirmation email skipped: missing SMTP configuration.')
         return False
@@ -629,7 +689,11 @@ def send_booking_confirmation(booking: Booking, checkout_url=None) -> bool:
         f"Guests: {booking.guests}\n"
         f"Estimated total: KSh {booking.amount:,.0f}\n"
         f"Booking status: {booking.status}\n"
-        + (f"Complete payment securely: {checkout_url}\n" if checkout_url else '')
+        + (
+            f"M-Pesa payment received and verified. Receipt: {booking.mpesa_receipt_number}\n"
+            if payment_confirmed
+            else "Check the M-Pesa prompt on your phone to complete payment. We will confirm your booking after Daraja verifies the payment.\n"
+        )
         + "\nYou can sign in at the Lamu Tours website to view and manage bookings made with your account.\n"
     )
     try:
@@ -693,6 +757,21 @@ def index():
     if os.path.isfile(frontend_index):
         return send_from_directory(FRONTEND_DIST, 'index.html')
     return send_from_directory(BASE_DIR, 'index.html')
+
+
+@app.route('/healthz')
+def health_check():
+    return {'status': 'ok'}, 200
+
+
+@app.route('/readyz')
+def readiness_check():
+    try:
+        db.session.execute(text('SELECT 1'))
+    except SQLAlchemyError:
+        app.logger.exception('Readiness check failed while querying the database.')
+        return {'status': 'unavailable'}, 503
+    return {'status': 'ready'}, 200
 
 
 def frontend_page():
@@ -1011,11 +1090,8 @@ def admin_cancel_booking(booking_id):
         return {'error': 'Booking not found.'}, 404
     if booking.status not in {'requested', 'confirmed', 'in_preparation'}:
         return {'error': 'Only active bookings can be cancelled.'}, 409
-    try:
-        expire_booking_checkout(booking)
-    except (stripe.error.StripeError, RuntimeError):
-        app.logger.exception('Could not expire Stripe checkout for booking %s.', booking.id)
-        return {'error': 'Could not safely cancel the pending checkout. Please try again.'}, 503
+    if booking.payment_status == 'pending':
+        return {'error': 'This booking has a pending M-Pesa request. Wait for its payment result before cancelling.'}, 409
     try:
         release_schedule(booking.schedule_id, booking.guests)
     except ValueError as exc:
@@ -1593,13 +1669,10 @@ def vendor_update_booking_status(booking_id):
     if requested_status not in transitions.get(booking.status, set()):
         return {'error': 'That booking status transition is not allowed.'}, 409
     if requested_status != 'cancelled' and booking.payment_status != 'paid':
-        return {'error': 'Stripe payment must be verified before this booking can be confirmed.'}, 409
+        return {'error': 'M-Pesa payment must be verified before this booking can be confirmed.'}, 409
     if requested_status == 'cancelled':
-        try:
-            expire_booking_checkout(booking)
-        except (stripe.error.StripeError, RuntimeError):
-            app.logger.exception('Could not expire Stripe checkout for booking %s.', booking.id)
-            return {'error': 'Could not safely cancel the pending checkout. Please try again.'}, 503
+        if booking.payment_status == 'pending':
+            return {'error': 'This booking has a pending M-Pesa request. Wait for its payment result before cancelling.'}, 409
         try:
             release_schedule(booking.schedule_id, booking.guests)
         except ValueError as exc:
@@ -1953,16 +2026,14 @@ def customer_cancel_booking(booking_id):
         return {'error': 'Booking not found.'}, 404
     if booking.status not in {'requested', 'confirmed'}:
         return {'error': 'Only requested or confirmed bookings can be cancelled.'}, 409
+    if booking.payment_status == 'pending':
+        return {'error': 'Your M-Pesa request is still pending. Wait for its payment result before cancelling.'}, 409
     try:
         booking_change_deadline(booking)
-        expire_booking_checkout(booking)
         release_schedule(booking.schedule_id, booking.guests)
     except ValueError as exc:
         db.session.rollback()
         return {'error': str(exc)}, 400
-    except (stripe.error.StripeError, RuntimeError):
-        app.logger.exception('Could not expire Stripe checkout for booking %s.', booking.id)
-        return {'error': 'Could not safely cancel the pending checkout. Please try again.'}, 503
     booking.status = 'cancelled'
     if booking.payment_status == 'pending':
         booking.payment_status = 'cancelled'
@@ -2149,17 +2220,20 @@ def contact_submit():
 def booking_confirmation():
     data = request.get_json(silent=True) if request.is_json else request.form
     data = data or {}
-    if not STRIPE_SECRET_KEY:
-        message = 'Secure online payment is unavailable right now. Please try again later.'
+    if not is_daraja_configured():
+        message = 'M-Pesa payments are not configured right now. Please try again later.'
         if request.is_json:
             return {'error': message}, 503
         return redirect('/booking.html?error=' + urllib.parse.quote(message))
 
-    allowed_country_codes = {'+1', '+27', '+44', '+91', '+254', '+255', '+256', '+971'}
     country_code = str(data.get('country_code', '')).strip()
     phone = str(data.get('phone', '')).strip()
-    if country_code not in allowed_country_codes or not phone.isdigit():
-        return redirect('/booking.html?error=Select%20a%20country%20code%20and%20enter%20numbers%20only')
+    try:
+        mpesa_phone = normalize_mpesa_phone(country_code, phone)
+    except ValueError as exc:
+        if request.is_json:
+            return {'error': str(exc)}, 400
+        return redirect('/booking.html?error=' + urllib.parse.quote(str(exc)))
 
     tour = str(data.get('tour', ''))
     guests = data.get('guests', '1')
@@ -2203,7 +2277,7 @@ def booking_confirmation():
         'schedule_id': schedule.id if schedule else None,
         'name': data.get('name', 'Guest'),
         'email': data.get('email', ''),
-        'phone': f'{country_code}{phone}',
+        'phone': f'+{mpesa_phone}',
         'tour': tour,
         'date': schedule.starts_at.date().isoformat() if schedule else data.get('date', ''),
         'time': schedule.starts_at.strftime('%H:%M') if schedule else data.get('time', ''),
@@ -2218,99 +2292,95 @@ def booking_confirmation():
     app.logger.info('Booking request saved: %s', saved_booking.to_dict())
 
     try:
-        payment_url = create_stripe_checkout_session(saved_booking)
-        email_sent = send_booking_confirmation(saved_booking, payment_url)
-        if request.is_json:
-            return {'booking': saved_booking.to_dict(), 'checkout_url': payment_url, 'email_sent': email_sent, 'managed': saved_booking.user_id is not None}, 201
-        return redirect(payment_url)
-    except (stripe.error.StripeError, RuntimeError, SQLAlchemyError):
-        app.logger.exception('Stripe checkout failed for booking %s.', saved_booking.id)
+        payment_request = create_daraja_stk_push(saved_booking)
+    except DarajaError as exc:
+        if exc.outcome_unknown:
+            app.logger.exception('Daraja payment initiation outcome is unknown for booking %s.', saved_booking.id)
+            email_sent = send_booking_confirmation(saved_booking)
+            if request.is_json:
+                return {
+                    'booking': saved_booking.to_dict(),
+                    'payment_reference': saved_booking.payment_reference,
+                    'payment_pending': True,
+                    'message': 'We could not confirm whether the M-Pesa prompt was sent. Check your phone and payment status before trying again.',
+                    'email_sent': email_sent,
+                    'managed': saved_booking.user_id is not None,
+                }, 202
+            return redirect('/booking-confirmation.html?' + urllib.parse.urlencode({
+                'booking_id': saved_booking.id,
+                'reference': saved_booking.payment_reference,
+                'email': 'sent' if email_sent else 'unavailable',
+                'managed': str(saved_booking.user_id is not None).lower(),
+                'pending': 'unknown',
+            }))
+        app.logger.error('Daraja rejected payment initiation for booking %s: %s', saved_booking.id, exc)
         try:
-            expire_booking_checkout(saved_booking)
-            if saved_booking.payment_status == 'pending':
-                release_schedule(saved_booking.schedule_id, saved_booking.guests)
-                saved_booking.payment_status = 'cancelled'
-                saved_booking.status = 'cancelled'
-                db.session.commit()
-        except (ValueError, stripe.error.StripeError, RuntimeError):
+            release_schedule(saved_booking.schedule_id, saved_booking.guests)
+            saved_booking.payment_status = 'failed'
+            saved_booking.status = 'cancelled'
+            db.session.commit()
+        except ValueError:
             db.session.rollback()
-            app.logger.exception('Could not release failed checkout booking %s.', saved_booking.id)
+            app.logger.exception('Could not release failed M-Pesa booking %s.', saved_booking.id)
         if request.is_json:
-            return {'error': 'Secure checkout could not be started. Your booking was not confirmed; please try again.'}, 503
-        return send_from_directory(BASE_DIR, 'booking-confirmation.html')
+            return {'error': 'M-Pesa could not start the payment. Your booking was not confirmed; please try again.'}, 503
+        return redirect('/booking.html?error=' + urllib.parse.quote(
+            'M-Pesa could not start the payment. Your booking was not confirmed; please try again.'
+        ))
+    except SQLAlchemyError:
+        db.session.rollback()
+        app.logger.exception('Could not save the Daraja payment reference for booking %s.', saved_booking.id)
+        if request.is_json:
+            return {
+                'booking': saved_booking.to_dict(),
+                'payment_reference': saved_booking.payment_reference,
+                'payment_pending': True,
+                'message': 'The M-Pesa request may have been sent. Check your phone and contact support before trying again.',
+            }, 202
+        return redirect('/booking-confirmation.html?' + urllib.parse.urlencode({
+            'booking_id': saved_booking.id,
+            'reference': saved_booking.payment_reference,
+            'pending': 'unknown',
+        }))
+
+    email_sent = send_booking_confirmation(saved_booking)
+    if request.is_json:
+        return {
+            'booking': saved_booking.to_dict(),
+            'payment_reference': saved_booking.payment_reference,
+            'payment_pending': True,
+            'message': payment_request['customer_message'],
+            'email_sent': email_sent,
+            'managed': saved_booking.user_id is not None,
+        }, 201
+    return redirect('/booking-confirmation.html?' + urllib.parse.urlencode({
+        'booking_id': saved_booking.id,
+        'reference': saved_booking.payment_reference,
+        'email': 'sent' if email_sent else 'unavailable',
+        'managed': str(saved_booking.user_id is not None).lower(),
+    }))
 
 
-@app.route('/payment-success')
-def payment_success():
-    booking_id = request.args.get('booking_id')
-    booking = Booking.query.get(int(booking_id)) if booking_id and booking_id.isdigit() else None
-    session_id = request.args.get('session_id', '')
-    payment_confirmed = False
-    if booking and booking.stripe_session_id == session_id and STRIPE_SECRET_KEY:
-        try:
-            checkout_session = stripe.checkout.Session.retrieve(session_id)
-            booking = confirm_stripe_checkout(checkout_session)
-            payment_confirmed = booking is not None
-        except (stripe.error.StripeError, RuntimeError):
-            app.logger.exception('Could not verify Stripe checkout for booking %s.', booking_id)
-
-    return render_template_string(
-        '''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Successful - Lamu Tours</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; margin: 0; padding: 2rem; color: #1e3c72; }
-        .card { max-width: 700px; margin: 1.5rem auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.12); }
-        a { color: #ff7e3f; font-weight: 600; text-decoration: none; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>{{ 'Payment confirmed' if payment_confirmed else 'Payment not confirmed' }}</h1>
-        <p>{% if payment_confirmed %}Your payment was verified by Stripe and your booking is confirmed.{% else %}We could not verify a completed payment. Your booking is not confirmed yet. If you completed checkout, please contact our team with your booking reference.{% endif %}</p>
-        {% if payment_confirmed and booking %}
-        <p><strong>Booking ID:</strong> {{ booking.id }}</p>
-        <p><strong>Tour:</strong> {{ booking.tour }}</p>
-        <p><strong>Total paid:</strong> KSh {{ '{:,.0f}'.format(booking.amount) }}</p>
-        {% else %}<p>No booking was confirmed for this checkout.</p>{% endif %}
-        <p><a href="/booking.html">Return to bookings</a></p>
-    </div>
-</body>
-</html>''', booking=booking, payment_confirmed=payment_confirmed)
+@app.route('/api/payment-status/<string:payment_reference>')
+@limiter.limit('60 per minute')
+def payment_status(payment_reference):
+    booking = Booking.query.filter_by(payment_reference=payment_reference).first()
+    if not booking:
+        return {'error': 'Payment status not found.'}, 404
+    return {
+        'payment_status': booking.payment_status,
+        'booking_status': booking.status,
+        'mpesa_receipt_number': booking.mpesa_receipt_number,
+    }
 
 
-@app.route('/stripe-webhook', methods=['POST'])
-def stripe_webhook():
-    if not STRIPE_WEBHOOK_SECRET:
-        app.logger.warning('Stripe webhook called without a configured webhook secret.')
-        return 'Webhook not configured', 400
-
-    payload = request.get_data(as_text=False)
-    signature = request.headers.get('Stripe-Signature', '')
-
-    try:
-        event = stripe.Webhook.construct_event(payload, signature, STRIPE_WEBHOOK_SECRET)
-    except ValueError:
-        return 'Invalid payload', 400
-    except stripe.error.SignatureVerificationError:
-        return 'Invalid signature', 400
-
-    event_type = event.get('type')
-    if event_type in {'checkout.session.completed', 'checkout.session.async_payment_succeeded'}:
-        session_data = event.get('data', {}).get('object', {})
-        confirm_stripe_checkout(session_data)
-    elif event_type == 'checkout.session.expired':
-        expire_booking_from_webhook(event.get('data', {}).get('object', {}))
-
-    return '', 204
-
-
-@app.route('/payment-cancel')
-def payment_cancel():
-    return redirect('/booking.html?error=Payment%20was%20not%20completed.%20Your%20booking%20is%20not%20confirmed.')
+@app.route('/daraja/callback', methods=['POST'])
+def daraja_callback():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return 'Invalid callback payload', 400
+    result, status = process_daraja_callback(payload)
+    return result, status
 
 
 @app.route('/dashboard', methods=['GET'])

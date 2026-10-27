@@ -9,7 +9,7 @@ import app as application
 
 @pytest.fixture
 def customer_trip(monkeypatch):
-    monkeypatch.setattr(application, 'STRIPE_SECRET_KEY', 'sk_test_checkout_mock')
+    monkeypatch.setattr(application, 'is_daraja_configured', lambda: True)
     email = f'customer-{uuid.uuid4().hex}@example.test'
     slug = f'customer-trip-{uuid.uuid4().hex}'
     with application.app.app_context():
@@ -47,16 +47,15 @@ def customer_trip(monkeypatch):
         application.db.session.commit()
         schedule_ids = [slot.id for slot in slots]
 
-    monkeypatch.setattr(application, 'send_booking_confirmation', lambda booking, checkout_url=None: True)
-    def mock_checkout_session(**params):
-        session_id = f"cs_test_{params['metadata']['booking_id']}"
-        return type('CheckoutSession', (), {
-            'id': session_id,
-            'url': f'https://checkout.stripe.test/{session_id}',
-        })()
+    monkeypatch.setattr(application, 'send_booking_confirmation', lambda booking, **kwargs: True)
+    def mock_stk_push(phone_number, amount, booking_id):
+        return {
+            'checkout_request_id': f'ws_CO_{booking_id}',
+            'merchant_request_id': f'merchant_{booking_id}',
+            'customer_message': 'STK prompt sent.',
+        }
 
-    monkeypatch.setattr(application.stripe.checkout.Session, 'create', mock_checkout_session)
-    monkeypatch.setattr(application, 'expire_booking_checkout', lambda booking: None)
+    monkeypatch.setattr(application, 'initiate_stk_push', mock_stk_push)
     client = application.app.test_client()
     response = client.post('/login', data={'email': email, 'password': 'customer-test-password'})
     assert response.status_code == 302
@@ -108,7 +107,9 @@ def test_customer_can_book_view_reschedule_and_cancel_while_capacity_is_reserved
     assert result['email_sent'] is True
     assert result['managed'] is True
     assert result['booking']['status'] == 'requested'
-    assert result['checkout_url'].startswith('https://checkout.stripe.test/')
+    assert result['booking']['payment_status'] == 'pending'
+    assert result['payment_reference']
+    assert result['message'] == 'STK prompt sent.'
     assert result['booking']['date'] == trip['starts_at'].date().isoformat()
 
     with application.app.app_context():
@@ -138,10 +139,10 @@ def test_customer_can_book_view_reschedule_and_cancel_while_capacity_is_reserved
         f'/api/customer/bookings/{booking_id}/cancel',
         headers={'X-CSRF-Token': trip['csrf']},
     )
-    assert response.status_code == 200
-    assert response.get_json()['booking']['status'] == 'cancelled'
+    assert response.status_code == 409
+    assert 'M-Pesa request is still pending' in response.get_json()['error']
     with application.app.app_context():
-        assert application.db.session.get(application.TourSchedule, second_slot).booked_count == 0
+        assert application.db.session.get(application.TourSchedule, second_slot).booked_count == 2
 
 
 def test_capacity_is_enforced_and_customer_changes_are_blocked_inside_48_hours(customer_trip):
@@ -161,8 +162,8 @@ def test_capacity_is_enforced_and_customer_changes_are_blocked_inside_48_hours(c
         f'/api/customer/bookings/{booking_id}/cancel',
         headers={'X-CSRF-Token': trip['csrf']},
     )
-    assert blocked.status_code == 400
-    assert '48 hours' in blocked.get_json()['error']
+    assert blocked.status_code == 409
+    assert 'M-Pesa request is still pending' in blocked.get_json()['error']
 
 
 def test_booking_requires_a_valid_departure_and_customer_csrf(customer_trip):
@@ -179,9 +180,9 @@ def test_booking_requires_a_valid_departure_and_customer_csrf(customer_trip):
     assert client.post(f'/api/customer/bookings/{booking_id}/cancel').status_code == 403
 
 
-def test_booking_is_blocked_when_stripe_is_not_configured(customer_trip, monkeypatch):
+def test_booking_is_blocked_when_daraja_is_not_configured(customer_trip, monkeypatch):
     trip = customer_trip
-    monkeypatch.setattr(application, 'STRIPE_SECRET_KEY', '')
+    monkeypatch.setattr(application, 'is_daraja_configured', lambda: False)
 
     response = trip['client'].post(
         '/booking-confirmation',
@@ -194,16 +195,20 @@ def test_booking_is_blocked_when_stripe_is_not_configured(customer_trip, monkeyp
         assert application.db.session.get(application.TourSchedule, trip['schedule_ids'][0]).booked_count == 0
 
 
-def test_checkout_session_uses_booking_total_and_kes(customer_trip, monkeypatch):
+def test_stk_push_uses_kenyan_phone_booking_total_and_booking_id(customer_trip, monkeypatch):
     trip = customer_trip
     captured = {}
 
-    def create_session(**params):
-        captured.update(params)
-        return type('CheckoutSession', (), {'id': 'cs_test_created', 'url': 'https://checkout.stripe.test/pay'})()
+    def request_stk_push(phone_number, amount, booking_id):
+        captured.update(phone_number=phone_number, amount=amount, booking_id=booking_id)
+        return {
+            'checkout_request_id': 'ws_CO_test',
+            'merchant_request_id': 'merchant_test',
+            'customer_message': 'Prompt sent.',
+        }
 
-    monkeypatch.setattr(application.stripe.checkout.Session, 'create', create_session)
-    with application.app.test_request_context('/', base_url='https://lamutours.test'):
+    monkeypatch.setattr(application, 'initiate_stk_push', request_stk_push)
+    with application.app.app_context():
         booking = application.Booking(
             user_id=trip['user_id'],
             schedule_id=trip['schedule_ids'][0],
@@ -221,129 +226,159 @@ def test_checkout_session_uses_booking_total_and_kes(customer_trip, monkeypatch)
         application.db.session.add(booking)
         application.db.session.commit()
 
-        checkout_url = application.create_stripe_checkout_session(booking)
+        payment_request = application.create_daraja_stk_push(booking)
 
-        assert checkout_url == 'https://checkout.stripe.test/pay'
-        assert captured['line_items'][0]['price_data']['currency'] == 'kes'
-        assert captured['line_items'][0]['price_data']['unit_amount'] == 150000
-        assert captured['customer_email'] == trip['email']
-        assert captured['metadata']['booking_id'] == str(booking.id)
-        assert captured['idempotency_key'] == f'booking-checkout-{booking.id}'
-        assert captured['success_url'].startswith('https://lamutours.co.ke/payment-success?')
-        assert captured['cancel_url'].startswith('https://lamutours.co.ke/payment-cancel?')
-        assert booking.stripe_session_id == 'cs_test_created'
+        assert payment_request['customer_message'] == 'Prompt sent.'
+        assert captured == {
+            'phone_number': '254712345678',
+            'amount': 1500,
+            'booking_id': booking.id,
+        }
+        assert booking.checkout_request_id == 'ws_CO_test'
+        assert booking.merchant_request_id == 'merchant_test'
 
 
-def test_success_redirect_does_not_confirm_an_unpaid_checkout(customer_trip, monkeypatch):
+def _daraja_callback(booking, result_code, metadata=None):
+    callback = {
+        'MerchantRequestID': booking.merchant_request_id,
+        'CheckoutRequestID': booking.checkout_request_id,
+        'ResultCode': result_code,
+        'ResultDesc': 'The service request is processed.',
+    }
+    if metadata is not None:
+        callback['CallbackMetadata'] = {
+            'Item': [{'Name': key, 'Value': value} for key, value in metadata.items()],
+        }
+    return {'Body': {'stkCallback': callback}}
+
+
+def test_m_pesa_callback_marks_paid_only_after_daraja_query_verification(customer_trip, monkeypatch):
     trip = customer_trip
     response = trip['client'].post(
         '/booking-confirmation',
         json=booking_payload(trip, trip['schedule_ids'][0]),
     )
-    booking_id = response.get_json()['booking']['id']
-    monkeypatch.setattr(application.stripe.checkout.Session, 'retrieve', lambda session_id: {
-        'id': session_id,
-        'metadata': {'booking_id': str(booking_id)},
-        'client_reference_id': str(booking_id),
-        'status': 'open',
-        'payment_status': 'unpaid',
-        'currency': 'kes',
-        'amount_total': 150000,
+    booking_data = response.get_json()['booking']
+    with application.app.app_context():
+        booking = application.db.session.get(application.Booking, booking_data['id'])
+        callback = _daraja_callback(booking, 0, {
+            'Amount': 1500,
+            'MpesaReceiptNumber': 'TST123ABC',
+            'TransactionDate': 20260516123456,
+            'PhoneNumber': 254712345678,
+        })
+    monkeypatch.setattr(application, 'query_stk_push', lambda checkout_id: {
+        'ResponseCode': '0',
+        'ResultCode': '0',
+        'CheckoutRequestID': f"ws_CO_{booking_data['id']}",
     })
 
-    result = trip['client'].get(
-        f'/payment-success?booking_id={booking_id}&session_id=cs_test_{booking_id}'
-    )
+    result = trip['client'].post('/daraja/callback', json=callback)
 
-    assert b'Payment not confirmed' in result.data
+    assert result.status_code == 204
     with application.app.app_context():
-        booking = application.db.session.get(application.Booking, booking_id)
+        booking = application.db.session.get(application.Booking, booking_data['id'])
+        assert booking.payment_status == 'paid'
+        assert booking.status == 'confirmed'
+        assert booking.mpesa_receipt_number == 'TST123ABC'
+
+
+def test_payment_status_requires_opaque_booking_reference(customer_trip):
+    trip = customer_trip
+    response = trip['client'].post(
+        '/booking-confirmation',
+        json=booking_payload(trip, trip['schedule_ids'][0]),
+    )
+    payment_reference = response.get_json()['payment_reference']
+
+    result = trip['client'].get(f'/api/payment-status/{payment_reference}')
+    assert result.status_code == 200
+    assert result.get_json()['payment_status'] == 'pending'
+    assert trip['client'].get('/api/payment-status/not-a-reference').status_code == 404
+
+
+def test_m_pesa_callback_does_not_confirm_mismatched_amount(customer_trip, monkeypatch):
+    trip = customer_trip
+    response = trip['client'].post(
+        '/booking-confirmation',
+        json=booking_payload(trip, trip['schedule_ids'][0]),
+    )
+    booking_data = response.get_json()['booking']
+    with application.app.app_context():
+        booking = application.db.session.get(application.Booking, booking_data['id'])
+        callback = _daraja_callback(booking, 0, {
+            'Amount': 100,
+            'MpesaReceiptNumber': 'TST123ABC',
+            'PhoneNumber': 254712345678,
+        })
+    monkeypatch.setattr(application, 'query_stk_push', lambda checkout_id: {
+        'ResponseCode': '0',
+        'ResultCode': '0',
+        'CheckoutRequestID': f"ws_CO_{booking_data['id']}",
+    })
+
+    result = trip['client'].post('/daraja/callback', json=callback)
+
+    assert result.status_code == 400
+    with application.app.app_context():
+        booking = application.db.session.get(application.Booking, booking_data['id'])
         assert booking.payment_status == 'pending'
         assert booking.status == 'requested'
 
 
-def test_completed_stripe_checkout_confirms_matching_booking(customer_trip, monkeypatch):
+def test_failed_m_pesa_callback_releases_reserved_capacity(customer_trip, monkeypatch):
     trip = customer_trip
     response = trip['client'].post(
         '/booking-confirmation',
         json=booking_payload(trip, trip['schedule_ids'][0]),
     )
-    booking_id = response.get_json()['booking']['id']
-    monkeypatch.setattr(application.stripe.checkout.Session, 'retrieve', lambda session_id: {
-        'id': session_id,
-        'metadata': {'booking_id': str(booking_id)},
-        'client_reference_id': str(booking_id),
-        'status': 'complete',
-        'payment_status': 'paid',
-        'currency': 'kes',
-        'amount_total': 150000,
+    booking_data = response.get_json()['booking']
+    with application.app.app_context():
+        booking = application.db.session.get(application.Booking, booking_data['id'])
+        callback = _daraja_callback(booking, 1032)
+    monkeypatch.setattr(application, 'query_stk_push', lambda checkout_id: {
+        'ResponseCode': '0',
+        'ResultCode': '1032',
+        'CheckoutRequestID': f"ws_CO_{booking_data['id']}",
     })
 
-    result = trip['client'].get(
-        f'/payment-success?booking_id={booking_id}&session_id=cs_test_{booking_id}'
-    )
+    result = trip['client'].post('/daraja/callback', json=callback)
 
-    assert b'Payment confirmed' in result.data
+    assert result.status_code == 204
     with application.app.app_context():
-        booking = application.db.session.get(application.Booking, booking_id)
-        assert booking.payment_status == 'paid'
-        assert booking.status == 'confirmed'
-
-
-def test_expired_checkout_webhook_releases_reserved_capacity(customer_trip, monkeypatch):
-    trip = customer_trip
-    response = trip['client'].post(
-        '/booking-confirmation',
-        json=booking_payload(trip, trip['schedule_ids'][0]),
-    )
-    booking_id = response.get_json()['booking']['id']
-    session_data = {
-        'id': f'cs_test_{booking_id}',
-        'metadata': {'booking_id': str(booking_id)},
-    }
-    monkeypatch.setattr(application, 'STRIPE_WEBHOOK_SECRET', 'whsec_test')
-    monkeypatch.setattr(application.stripe.Webhook, 'construct_event', lambda *args: {
-        'type': 'checkout.session.expired',
-        'data': {'object': session_data},
-    })
-
-    webhook_response = trip['client'].post('/stripe-webhook', data=b'{}', headers={'Stripe-Signature': 'test'})
-
-    assert webhook_response.status_code == 204
-    with application.app.app_context():
-        booking = application.db.session.get(application.Booking, booking_id)
+        booking = application.db.session.get(application.Booking, booking_data['id'])
         schedule = application.db.session.get(application.TourSchedule, trip['schedule_ids'][0])
-        assert booking.payment_status == 'cancelled'
+        assert booking.payment_status == 'failed'
         assert booking.status == 'cancelled'
         assert schedule.booked_count == 0
 
 
-def test_completed_checkout_webhook_confirms_payment(customer_trip, monkeypatch):
+def test_unknown_stk_request_outcome_keeps_capacity_reserved(customer_trip, monkeypatch):
     trip = customer_trip
+
+    def unknown_outcome(*args):
+        raise application.DarajaError('Request timed out.', outcome_unknown=True)
+
+    monkeypatch.setattr(application, 'initiate_stk_push', unknown_outcome)
     response = trip['client'].post(
         '/booking-confirmation',
         json=booking_payload(trip, trip['schedule_ids'][0]),
     )
-    booking_id = response.get_json()['booking']['id']
-    session_data = {
-        'id': f'cs_test_{booking_id}',
-        'client_reference_id': str(booking_id),
-        'metadata': {'booking_id': str(booking_id)},
-        'status': 'complete',
-        'payment_status': 'paid',
-        'currency': 'kes',
-        'amount_total': 150000,
-    }
-    monkeypatch.setattr(application, 'STRIPE_WEBHOOK_SECRET', 'whsec_test')
-    monkeypatch.setattr(application.stripe.Webhook, 'construct_event', lambda *args: {
-        'type': 'checkout.session.completed',
-        'data': {'object': session_data},
-    })
 
-    webhook_response = trip['client'].post('/stripe-webhook', data=b'{}', headers={'Stripe-Signature': 'test'})
-
-    assert webhook_response.status_code == 204
+    assert response.status_code == 202
     with application.app.app_context():
-        booking = application.db.session.get(application.Booking, booking_id)
-        assert booking.payment_status == 'paid'
-        assert booking.status == 'confirmed'
+        booking = application.Booking.query.filter_by(user_id=trip['user_id']).order_by(application.Booking.id.desc()).first()
+        schedule = application.db.session.get(application.TourSchedule, trip['schedule_ids'][0])
+        assert booking.payment_status == 'pending'
+        assert schedule.booked_count == 1
+
+
+def test_m_pesa_bookings_require_a_kenyan_phone_number(customer_trip):
+    trip = customer_trip
+    payload = booking_payload(trip, trip['schedule_ids'][0])
+    payload['country_code'] = '+1'
+
+    response = trip['client'].post('/booking-confirmation', json=payload)
+
+    assert response.status_code == 400
+    assert 'Kenyan phone number' in response.get_json()['error']
