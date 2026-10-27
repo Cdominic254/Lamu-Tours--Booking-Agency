@@ -3,6 +3,16 @@ name: CI/CD
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      deployment:
+        description: Deployment target
+        required: true
+        type: choice
+        options:
+          - preview
+          - production
+        default: preview
 
 permissions:
   contents: read
@@ -62,7 +72,9 @@ jobs:
       vars.VERCEL_DEPLOY_ENABLED == 'true' &&
       (github.event_name == 'push' && github.ref == 'refs/heads/main' ||
        github.event_name == 'pull_request' &&
-       github.event.pull_request.head.repo.full_name == github.repository)
+       github.event.pull_request.head.repo.full_name == github.repository ||
+       github.event_name == 'workflow_dispatch' &&
+       (inputs.deployment == 'preview' || github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -76,10 +88,29 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@41.7.2
 
+      - name: Validate Vercel credentials
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::Missing required GitHub Actions secret: VERCEL_TOKEN"
+            exit 1
+          fi
+          if [ -z "$VERCEL_ORG_ID" ]; then
+            echo "::error::Missing required GitHub Actions secret: VERCEL_ORG_ID"
+            exit 1
+          fi
+          if [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::error::Missing required GitHub Actions secret: VERCEL_PROJECT_ID"
+            exit 1
+          fi
+
       - name: Pull Vercel project settings
         run: vercel pull --yes --environment="$VERCEL_ENV" --token="$VERCEL_TOKEN"
         env:
-          VERCEL_ENV: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+          VERCEL_ENV: ${{ github.event_name == 'push' && 'production' || github.event_name == 'workflow_dispatch' && inputs.deployment == 'production' && 'production' || 'preview' }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -87,7 +118,7 @@ jobs:
       - name: Build Vercel deployment
         run: vercel build $VERCEL_BUILD_FLAG --token="$VERCEL_TOKEN"
         env:
-          VERCEL_BUILD_FLAG: ${{ github.event_name == 'push' && '--prod' || '' }}
+          VERCEL_BUILD_FLAG: ${{ (github.event_name == 'push' || inputs.deployment == 'production') && '--prod' || '' }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -95,7 +126,7 @@ jobs:
       - name: Deploy to Vercel
         run: vercel deploy --yes --prebuilt $VERCEL_DEPLOY_FLAG --token="$VERCEL_TOKEN"
         env:
-          VERCEL_DEPLOY_FLAG: ${{ github.event_name == 'push' && '--prod' || '' }}
+          VERCEL_DEPLOY_FLAG: ${{ (github.event_name == 'push' || inputs.deployment == 'production') && '--prod' || '' }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

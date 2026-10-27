@@ -122,7 +122,7 @@ GitHub Actions runs backend tests and builds the frontend on every push and pull
 - `VERCEL_ORG_ID`: the Vercel team or account ID
 - `VERCEL_PROJECT_ID`: this project's Vercel project ID
 
-Then add the repository variable `VERCEL_DEPLOY_ENABLED` with the value `true`. Pull requests from branches in this repository deploy a Vercel Preview; pushes to `main` deploy to Production. Fork pull requests run CI but do not deploy, because GitHub does not provide repository secrets to them. Leave the variable unset to run CI without deployments.
+Then add the repository variable `VERCEL_DEPLOY_ENABLED` with the value `true`. Pull requests from branches in this repository deploy a Vercel Preview; pushes to `main` deploy to Production. Fork pull requests run CI but do not deploy, because GitHub does not provide repository secrets to them. Leave the variable unset to run CI without deployments. You can also run **Actions → CI/CD → Run workflow** to deploy a Preview from any branch or Production from `main`; production deployments cannot be manually triggered from another branch.
 
 1. Import this repository in the Vercel dashboard, or run `vercel` from the project directory.
 2. Add `lamutours.co.ke` to the Vercel project's **Settings → Domains** and follow Vercel's DNS instructions at your domain registrar. Set the apex domain as the primary domain; add `www.lamutours.co.ke` too if you want Vercel to redirect it.
